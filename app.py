@@ -88,31 +88,12 @@ SYSTEM_PROMPT = """あなたは「名探偵AI」です。
 
 def extract_direct_answer(text: str) -> str | None:
     """
-    「それは〇〇ですか」「〇〇ですか（答え候補を直接聞く）」を検出。
-    答え候補文字列を返す。検出できなければ None。
+    「それは〇〇ですか」パターンのみ検出してguessに変換する。
+    「〇〇ですか」単体はカテゴリ質問の可能性があるため対象外。
     """
-    # パターン1: 「それは〇〇ですか」
     m = re.match(r'^それは(.+?)(?:ですか|でしょうか)[？?。]?$', text.strip())
     if m:
         return m.group(1).strip()
-    # パターン2: 「〇〇ですか」で質問文が短く（12文字以下）固有名詞っぽい
-    m2 = re.match(r'^(.+?)(?:ですか|でしょうか)[？?。]?$', text.strip())
-    if m2:
-        candidate = m2.group(1).strip()
-        # 特徴語（形容詞・動詞・副詞）が含まれていれば category question = OK
-        ok_words = ['生き物','動物','植物','食べ物','飲み物','道具','乗り物',
-                    '建物','場所','色','形','大き','小さ','長い','短','高い','低',
-                    '重い','軽','硬','柔','温','冷','甘','辛','苦','酸',
-                    '手で','足で','水の中','地上','地下','空','海','川','屋内','屋外',
-                    '日本','海外','国内','古い','新し','現代','歴史','スポーツ',
-                    '生き','泳','走','飛','使わ','食べ','飲','見','聞','触',
-                    'できます','できる','ある','いる','になる','として','ような',
-                    'より','ほど','くらい','ほとんど','たいてい','ふつう',
-                    '主に','よく','たまに','まれ']
-        if not any(w in candidate for w in ok_words):
-            # 短くて特徴語なし = 固有名詞の直接確認質問の疑い
-            if len(candidate) <= 10:
-                return candidate
     return None
 
 
@@ -172,8 +153,12 @@ def next_step():
         data = json.loads(raw)
         data["turn"] = turn
 
-        # ── 直接特定質問ガード ──────────────────────────────────
-        # 「それは〇〇ですか」など答えを直接聞く質問を guess に変換
+        # ── ガード1: 序盤の早すぎるguessをブロック ────────────────
+        if data.get("type") == "guess" and turn < 5:
+            print(f"[GUARD] {turn}問目のguessをブロック → 質問を継続")
+            data = {"type": "question", "text": "生き物ですか？", "turn": turn}
+
+        # ── ガード2: 直接特定質問（それは〇〇ですか）をguessに変換 ──
         if data.get("type") == "question":
             candidate = extract_direct_answer(data.get("text", ""))
             if candidate:
