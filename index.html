@@ -661,6 +661,13 @@ h1 {
       <div class="result-msg"   id="result-msg"></div>
     </div>
 
+    <!-- ギャップ分析パネル（不正解時のみ表示） -->
+    <div id="gap-analysis" style="display:none; width:100%; background:rgba(60,15,10,.7); border:1px solid #6A2020; border-radius:14px; padding:14px 16px; margin-bottom:16px;">
+      <div style="font-size:11px; letter-spacing:.2em; color:#C05040; margin-bottom:10px;">🔬 推理ギャップ分析</div>
+      <div id="gap-why" style="font-size:12px; color:#D4907A; line-height:1.7; margin-bottom:8px;"></div>
+      <div id="gap-key" style="font-size:12px; color:#A06850; line-height:1.7; border-top:1px solid #4A1A10; padding-top:8px; margin-top:4px;"></div>
+    </div>
+
     <!-- 捜査記録ツリー -->
     <div class="case-file-wrap">
       <div class="case-file-title">📂 捜査記録ファイル</div>
@@ -807,22 +814,32 @@ async function verdict(correct) {
     const res  = await fetch('/api/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guess: currentGuess.answer, actual, correct }),
+      body: JSON.stringify({ guess: currentGuess.answer, actual, correct, history }),
     });
     const data = await res.json();
-    showResult(correct, data.message, actual || currentGuess.answer);
+    showResult(correct, data.message, actual || currentGuess.answer, data.analysis);
   } catch (e) {
     showResult(correct, correct ? '事件解決！' : `正解は「${actual}」でしたか。`, actual || currentGuess.answer);
   }
 }
 
 // ── 結果表示 ─────────────────────────────────────────────────────
-function showResult(correct, message, answer) {
+function showResult(correct, message, answer, analysis) {
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
   document.getElementById('result-icon').textContent  = correct ? '🎉' : '🕵️';
   document.getElementById('result-title').textContent = correct ? '事件解決！' : '謎は深まる…';
   document.getElementById('result-msg').textContent   = message;
+
+  // ギャップ分析パネル
+  const gapPanel = document.getElementById('gap-analysis');
+  if (!correct && analysis) {
+    document.getElementById('gap-why').textContent = '❌ 誤推理の原因: ' + (analysis.why_wrong || '');
+    document.getElementById('gap-key').textContent = '🔑 決定的な質問: ' + (analysis.key_question || '');
+    gapPanel.style.display = 'block';
+  } else {
+    gapPanel.style.display = 'none';
+  }
 
   buildCaseFile(answer);
   showScreen('screen-result');

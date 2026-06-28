@@ -41,10 +41,18 @@ SYSTEM_PROMPT = """あなたは「名探偵AI」です。
 - 質問が15問以上で確信度50%以上 → 特定する（最善の推理）
 - 質問が20問を超えたら必ず特定する（諦めずに最善の推理）
 
-## 絶対禁止：答えを質問しない
-答えそのものを質問してはいけない。
-「それはダーツですか？」「〇〇ですか？」のように特定の答えを確認する質問は厳禁。
-確信が高まったら、必ず {"type":"guess",...} として推理結果を提示すること。
+## 絶対禁止：特定のものを直接質問しない
+候補として思い浮かんだ具体的な答えを質問で確認することは厳禁。
+「ごぼうですか？」「大根ですか？」「ダーツですか？」のように
+固有名詞や特定の答え候補をそのまま質問するのは禁止。
+
+【禁止の判定基準】
+質問への回答が「はい」なら答えが一意に特定できる = その質問は禁止。
+例：「白くて細長い根菜ですか？」→ 大根に絞られる → 禁止
+例：「食材として使われる根菜ですか？」→ ごぼう・大根・にんじんなど複数 → OK
+
+確信度が高まったら必ず {"type":"guess",...} として推理結果を提示すること。
+早めのguessが望ましい（間違えた方が情報になる）。
 
 ## 矛盾検出と回答の再検証
 ユーザーの回答が後の質問と矛盾する場合がある（初期の誤回答・勘違いなど）。
@@ -133,13 +141,55 @@ def verify():
     guess   = body.get("guess", "")
     actual  = body.get("actual", "")
     correct = body.get("correct", False)
+    history = body.get("history", [])
 
     if correct or not actual:
-        return jsonify({"message": f"事件解決！やはり「{guess}」でしたね。名探偵の推理に狂いはない。"})
+        return jsonify({"message": f"事件解決！やはり「{guess}」でしたね。名探偵の推理に狂いはない。", "analysis": None})
 
+    # 会話履歴をテキスト化
+    ans_map = {"yes":"はい","no":"いいえ","maybe":"たぶんはい","maybe_no":"たぶんいいえ","dunno":"わからない"}
+    history_text = "\n".join(
+        f"Q{i+1}: {h['question']} → {ans_map.get(h.get('answer',''), h.get('answer',''))}"
+        for i, h in enumerate(history)
+    ) if history else "（履歴なし）"
+
+    # ギャップ分析
+    analysis = None
+    try:
+        gap_resp = client.messages.create(
+            model=MODEL, max_tokens=250,
+            messages=[{"role": "user", "content":
+                f"名探偵ゲームの会話ログ:\n{history_text}\n\n"
+                f"名探偵は「{guess}」と推理したが、正解は「{actual}」だった。\n"
+                f"以下の2点を簡潔に分析してJSON形式で返してください:\n"
+                f"1. なぜ「{guess}」と誤推理したか（会話ログのどの回答がミスリードになったか）\n"
+                f"2. 「{actual}」を正しく特定するには、どんな質問が決定的だったか\n"
+                f"出力形式: {{\"why_wrong\":\"誤推理の理由（40字以内）\",\"key_question\":\"決定的だった質問（20字以内）\"}}"
+            }]
+        )
+        raw = gap_resp.content[0].text.strip()
+        start, end = raw.find("{"), raw.rfind("}") + 1
+        if start >= 0 and end > start:
+            analysis = json.loads(raw[start:end])
+    except Exception as e:
+        print(f"[WARN] gap analysis failed: {e}")
+
+    # 悔しがりコメント
     try:
         resp = client.messages.create(
-            model=MODEL, max_tokens=120,
+            model=MODEL, max_tokens=80,
             messages=[{"role": "user", "content":
                 f"名探偵ゲームで「{guess}」と推理したが不正解で、正解は「{actual}」だった。"
-          
+                f"名探偵らしく悔しがりながら「なるほど、次こそは」という口調で一言。30字以内。"}]
+        )
+        msg = resp.content[0].text.strip()
+    except:
+        msg = f"なんと…「{actual}」でしたか。この名探偵が見誤るとは。次は必ず。"
+
+    return jsonify({"message": msg, "analysis": analysis})
+
+
+if __name__ == "__main__":
+    print(f"[名探偵AI] http://localhost:{PORT}")
+    print(f"  Anthropic API: {'✓' if ANTHROPIC_KEY else '✗ 未設定'}")
+    app.run(host="0.0.0.0", port=PORT, debug=False)
