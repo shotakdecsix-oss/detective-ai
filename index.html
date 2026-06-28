@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>名探偵AI</title>
+<style>
+/* ── リセット & ベース ─────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #0D0A06;
+  color: #F0E4C8;
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif;
+  overflow-x: hidden;
+}
+
+/* ── 背景 ─────────────────────────────────────────────── */
+.bg {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(212,160,23,.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(100,60,10,.15) 0%, transparent 45%),
+    #0D0A06;
+}
+/* 浮遊パーティクル（虫眼鏡） */
+.particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.particle {
+  position: absolute;
+  font-size: 14px;
+  opacity: 0;
+  animation: floatUp 12s infinite linear;
+  filter: sepia(1) brightness(.6);
+}
+@keyframes floatUp {
+  0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+  10%  { opacity: .25; }
+  90%  { opacity: .1; }
+  100% { transform: translateY(-10vh) rotate(40deg); opacity: 0; }
+}
+
+/* ── レイアウト ───────────────────────────────────────── */
+#app {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 16px 40px;
+}
+
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; }
+.screen.active { display: flex; }
+
+/* ── ヘッダー ─────────────────────────────────────────── */
+header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.badge {
+  display: inline-block;
+  width: 54px; height: 54px;
+  background: radial-gradient(circle, #D4A017, #8B6914);
+  border-radius: 50%;
+  font-size: 26px;
+  line-height: 54px;
+  box-shadow: 0 0 20px rgba(212,160,23,.5), 0 0 40px rgba(212,160,23,.2);
+  margin-bottom: 8px;
+}
+h1 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .15em;
+  color: #D4A017;
+  text-shadow: 0 0 20px rgba(212,160,23,.4);
+}
+.subtitle {
+  font-size: 11px;
+  color: #806040;
+  letter-spacing: .1em;
+  margin-top: 4px;
+}
+
+/* ── 探偵キャラ SVG ───────────────────────────────────── */
+.detective-wrap {
+  margin: 8px 0 4px;
+  position: relative;
+}
+.detective-wrap svg {
+  filter: drop-shadow(0 4px 16px rgba(212,160,23,.3));
+}
+/* パイプの煙アニメ */
+@keyframes smokeDrift {
+  0%   { transform: translate(0,0) scale(1);   opacity: .5; }
+  100% { transform: translate(-6px,-30px) scale(1.8); opacity: 0; }
+}
+.smoke1 { animation: smokeDrift 2s infinite ease-out; }
+.smoke2 { animation: smokeDrift 2s .6s infinite ease-out; }
+.smoke3 { animation: smokeDrift 2s 1.2s infinite ease-out; }
+/* 虫眼鏡の揺れ */
+@keyframes glassSwing {
+  0%,100% { transform-origin: 172px 218px; transform: rotate(0deg); }
+  50%      { transform-origin: 172px 218px; transform: rotate(6deg); }
+}
+.thinking-anim .magnifier { animation: glassSwing 2s ease-in-out infinite; }
+
+/* ── スタート画面 ─────────────────────────────────────── */
+.start-card {
+  background: rgba(30,20,8,.8);
+  border: 1px solid #3A2A10;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+  margin-top: 12px;
+}
+.start-card p {
+  font-size: 14px;
+  color: #C0A060;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+.btn-start {
+  background: linear-gradient(135deg, #D4A017, #8B6914);
+  color: #0D0A06;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 36px;
+  font-size: 16px;
+  font-weight: 900;
+  font-family: inherit;
+  letter-spacing: .1em;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(212,160,23,.4);
+  transition: all .2s;
+}
+.btn-start:hover { transform: scale(1.04); box-shadow: 0 6px 28px rgba(212,160,23,.6); }
+
+/* ── ターン表示 ───────────────────────────────────────── */
+.turn-display {
+  font-size: 12px;
+  letter-spacing: .2em;
+  color: #806040;
+  margin: 4px 0 8px;
+}
+.turn-display span { color: #D4A017; font-size: 18px; font-weight: 900; }
+
+/* ── 質問カード ───────────────────────────────────────── */
+.question-card {
+  width: 100%;
+  background: rgba(25,16,4,.9);
+  border: 1px solid #4A3010;
+  border-left: 3px solid #D4A017;
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  position: relative;
+}
+.question-card::before {
+  content: '🔍';
+  position: absolute; top: -14px; left: 16px;
+  background: #D4A017;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 0 10px rgba(212,160,23,.5);
+}
+#question-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #F0E4C8;
+  text-align: center;
+  letter-spacing: .05em;
+}
+/* ローディングドット */
+.dots {
+  display: flex; gap: 6px;
+}
+.dots span {
+  width: 8px; height: 8px;
+  background: #D4A017;
+  border-radius: 50%;
+  animation: bounce .9s infinite ease-in-out;
+}
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce {
+  0%,100% { transform: translateY(0); opacity: .4; }
+  50%      { transform: translateY(-6px); opacity: 1; }
+}
+.hidden { display: none !important; }
+
+/* ── 回答ボタン ───────────────────────────────────────── */
+.answer-buttons {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.ans-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+.ans-btn:hover { transform: translateX(4px); filter: brightness(1.15); }
+.ans-btn:active { transform: scale(.98); }
+.ans-btn[data-ans="yes"]      { background:#0D2B1A; border-color:#16A34A; color:#4ADE80; }
+.ans-btn[data-ans="no"]       { background:#2B0D0D; border-color:#DC2626; color:#F87171; }
+.ans-btn[data-ans="maybe"]    { background:#0D1A2B; border-color:#2563EB; color:#60A5FA; }
+.ans-btn[data-ans="maybe_no"] { background:#1A0D2B; border-color:#7C3AED; color:#A78BFA; }
+.ans-btn[data-ans="dunno"]    { background:#1A1A0D; border-color:#6B7280; color:#9CA3AF; }
+.ans-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ── 証拠記録パネル ───────────────────────────────────── */
+.evidence-panel {
+  width: 100%;
+  background: rgba(18,12,4,.8);
+  border: 1px solid #2A1A08;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.evidence-title {
+  background: rgba(212,160,23,.1);
+  border-bottom: 1px solid #2A1A08;
+  padding: 8px 14px;
+  font-size: 11px;
+  letter-spacing: .15em;
+  color: #806040;
+}
+#evidence-list {
+  padding: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+#evidence-list:empty::after {
+  content: '手がかりはまだない…';
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: #4A3020;
+  padding: 12px;
+}
+.evidence-item {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  border-bottom: 1px solid #1A1008;
+}
+.evidence-item:last-child { border-bottom: none; }
+.ev-q { color: #806040; white-space: nowrap; font-size: 10px; }
+.ev-text { color: #C0A060; flex: 1; }
+.ev-ans { white-space: nowrap; font-weight: 700; font-size: 11px; }
+.ev-ans.yes      { color: #4ADE80; }
+.ev-ans.no       { color: #F87171; }
+.ev-ans.maybe    { color: #60A5FA; }
+.ev-ans.maybe_no { color: #A78BFA; }
+.ev-ans.dunno    { color: #9CA3AF; }
+
+/* ── 推理発表画面 ─────────────────────────────────────── */
+#screen-guess {
+  gap: 0;
+}
+.guess-card {
+  width: 100%;
+  background: rgba(20,12,2,.95);
+  border: 2px solid #D4A017;
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(212,160,23,.2), inset 0 0 30px rgba(0,0,0,.5);
+  margin-top: 12px;
+}
+.guess-label {
+  font-size: 12px;
+  letter-spacing: .3em;
+  color: #806040;
+  margin-bottom: 16px;
+}
+.guess-answer {
+  font-size: 36px;
+  font-weight: 900;
+  color: #D4A017;
+  letter-spacing: .1em;
+  text-shadow: 0 0 20px rgba(212,160,23,.6);
+  margin-bottom: 12px;
+  animation: revealPulse 1s ease-out;
+}
+@keyframes revealPulse {
+  0%   { opacity: 0; transform: scale(.8); }
+  60%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.guess-confidence {
+  display: inline-block;
+  background: rgba(212,160,23,.15);
+  border: 1px solid #8B6914;
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: 11px;
+  color: #D4A017;
+  margin-bottom: 12px;
+}
+.guess-reason {
+  font-size: 13px;
+  color: #A08040;
+  line-height: 1.7;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+.verdict-row {
+  display: flex; gap: 12px;
+}
+.btn-correct, .btn-wrong {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: .05em;
+}
+.btn-correct { background:#0D2B1A; border-color:#16A34A; color:#4ADE80; }
+.btn-wrong   { background:#2B0D0D; border-color:#DC2626; color:#F87171; }
+.btn-correct:hover { background:#16A34A; color:#fff; }
+.btn-wrong:hover   { background:#DC2626; color:#fff; }
+
+/* ── 結果画面 ─────────────────────────────────────────── */
+.result-banner {
+  width: 100%;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin: 12px 0 20px;
+}
+.result-banner.solved {
+  background: linear-gradient(135deg, rgba(212,160,23,.2), rgba(212,160,23,.05));
+  border: 2px solid #D4A017;
+}
+.result-banner.failed {
+  background: rgba(30,10,10,.8);
+  border: 2px solid #4A2020;
+}
+.result-banner .result-icon { font-size: 40px; margin-bottom: 8px; }
+.result-banner .result-title { font-size: 20px; font-weight: 900; color: #D4A017; letter-spacing: .1em; }
+.result-banner .result-msg   { font-size: 13px; color: #A08040; margin-top: 6px; line-height: 1.6; }
+
+/* 捜査記録ツリー */
+.case-file-wrap {
+  width: 100%;
+  background: rgba(18,12,4,.8);
+  border: 1px solid #2A1A08;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.case-file-title {
+  background: rgba(212,160,23,.1);
+  border-bottom: 1px solid #2A1A08;
+  padding: 10px 16px;
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: #806040;
+}
+#case-file-svg { width: 100%; overflow-x: auto; }
+
+.btn-restart {
+  background: transparent;
+  border: 1px solid #4A3010;
+  border-radius: 30px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #806040;
+  cursor: pointer;
+  letter-spacing: .1em;
+  transition: all .2s;
+}
+.btn-restart:hover { border-color: #D4A017; color: #D4A017; }
+
+/* ── フラッシュ演出 ───────────────────────────────────── */
+.flash-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(212,160,23,.15);
+  pointer-events: none;
+  animation: flashIn .4s ease-out forwards;
+}
+@keyframes flashIn {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<!-- パーティクル -->
+<div class="particles" id="particles"></div>
+
+<div id="app">
+
+  <!-- ══ スタート画面 ══════════════════════════════════ -->
+  <div id="screen-start" class="screen active">
+    <header>
+      <div class="badge">🔍</div>
+      <h1>名探偵AI</h1>
+      <p class="subtitle">はい・いいえだけで真実を突き止める</p>
+    </header>
+
+    <!-- 探偵キャラ -->
+    <div class="detective-wrap">
+      <svg viewBox="0 0 220 310" width="170" height="240">
+        <defs>
+          <radialGradient id="glow-gold" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <!-- 足元の光 -->
+        <ellipse cx="110" cy="295" rx="70" ry="15" fill="url(#glow-gold)"/>
+
+        <!-- トレンチコート -->
+        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
+        <!-- コートのライン -->
+        <path d="M90 148 L110 176 L130 148" fill="#1A1208" stroke="#120C04" stroke-width="1"/>
+        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
+        <!-- ボタン -->
+        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
+        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
+        <circle cx="110" cy="248" r="4" fill="#3A2A10"/>
+        <!-- 左ラペル -->
+        <path d="M90 148 Q72 168 68 188" stroke="#3A2A10" stroke-width="2" fill="none"/>
+        <!-- 右ラペル -->
+        <path d="M130 148 Q148 168 152 188" stroke="#3A2A10" stroke-width="2" fill="none"/>
+
+        <!-- 左腕 -->
+        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <!-- 左手 -->
+        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
+
+        <!-- 右腕 -->
+        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <!-- 虫眼鏡 -->
+        <g class="magnifier">
+          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
+          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
+          <!-- レンズの光沢 -->
+          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
+          <!-- グリップ -->
+          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+        </g>
+
+        <!-- 首 -->
+        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
+
+        <!-- 顔 -->
+        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
+        <!-- 顔の影（帽子のつば） -->
+        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.72"/>
+
+        <!-- 輝く目 -->
+        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <!-- 目のハイライト -->
+        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
+        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
+
+        <!-- 口ひげ -->
+        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+        <!-- パイプ -->
+        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C" stroke="#4A2A0E" stroke-width="1"/>
+        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
+        <!-- 煙 -->
+        <circle class="smoke1" cx="134" cy="107" r="4" fill="#666" opacity="0.5"/>
+        <circle class="smoke2" cx="130" cy="94" r="5" fill="#666" opacity="0.35"/>
+        <circle class="smoke3" cx="136" cy="82" r="6" fill="#666" opacity="0.2"/>
+
+        <!-- ハット（帽子）最前面 -->
+        <!-- ハット本体 -->
+        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
+        <!-- 前つば -->
+        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
+        <!-- 後ろつば -->
+        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
+        <!-- ハットバンド -->
+        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
+        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <div class="start-card">
+      <p>何かを頭の中でイメージしてください。<br>人・物・概念、なんでも構いません。<br>名探偵が必ず真実を突き止めます。</p>
+      <button class="btn-start" onclick="startGame()">🔍 捜査開始</button>
+    </div>
+  </div>
+
+  <!-- ══ 質問画面 ══════════════════════════════════════ -->
+  <div id="screen-game" class="screen">
+    <header>
+      <div class="badge">🔍</div>
+      <h1>名探偵AI</h1>
+    </header>
+
+    <div class="detective-wrap thinking-anim">
+      <svg viewBox="0 0 220 310" width="130" height="184">
+        <defs>
+          <radialGradient id="glow-gold2" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="110" cy="295" rx="70" ry="15" fill="url(#glow-gold2)"/>
+        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
+        <path d="M90 148 L110 176 L130 148" fill="#1A1208"/>
+        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
+        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
+        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
+        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
+        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <g class="magnifier">
+          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
+          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
+          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
+          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+        </g>
+        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
+        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
+        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.72"/>
+        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
+        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
+        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C"/>
+        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
+        <circle class="smoke1" cx="134" cy="107" r="4" fill="#666" opacity="0.5"/>
+        <circle class="smoke2" cx="130" cy="94" r="5" fill="#666" opacity="0.35"/>
+        <circle class="smoke3" cx="136" cy="82" r="6" fill="#666" opacity="0.2"/>
+        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
+        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
+        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
+        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
+        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <div class="turn-display">第 <span id="turn-num">1</span> 問</div>
+
+    <div class="question-card">
+      <div class="dots" id="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <p id="question-text" class="hidden"></p>
+    </div>
+
+    <div class="answer-buttons" id="answer-buttons">
+      <button class="ans-btn" data-ans="yes"      onclick="answer('yes')">✅ はい</button>
+      <button class="ans-btn" data-ans="no"       onclick="answer('no')">❌ いいえ</button>
+      <button class="ans-btn" data-ans="maybe"    onclick="answer('maybe')">🤔 たぶんはい</button>
+      <button class="ans-btn" data-ans="maybe_no" onclick="answer('maybe_no')">🤷 たぶんいいえ</button>
+      <button class="ans-btn" data-ans="dunno"    onclick="answer('dunno')">❓ わからない</button>
+    </div>
+
+    <div class="evidence-panel">
+      <div class="evidence-title">📋 手がかり記録</div>
+      <div id="evidence-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ 推理発表画面 ══════════════════════════════════ -->
+  <div id="screen-guess" class="screen">
+    <header>
+      <div class="badge">🔍</div>
+      <h1>名探偵AI</h1>
+    </header>
+
+    <div class="detective-wrap" style="margin-bottom:4px">
+      <svg viewBox="0 0 220 310" width="130" height="184">
+        <defs>
+          <radialGradient id="glow-gold3" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="110" cy="295" rx="80" ry="18" fill="url(#glow-gold3)"/>
+        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
+        <path d="M90 148 L110 176 L130 148" fill="#1A1208"/>
+        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
+        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
+        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
+        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
+        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <g>
+          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
+          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
+          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
+          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+        </g>
+        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
+        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
+        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.55"/>
+        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
+        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
+        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
+        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
+        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C"/>
+        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
+        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
+        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
+        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
+        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
+        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <div class="guess-card">
+      <p class="guess-label">推理の結果…真犯人は</p>
+      <div class="guess-answer" id="guess-answer-text"></div>
+      <div class="guess-confidence" id="guess-confidence-text"></div>
+      <p class="guess-reason" id="guess-reason-text"></p>
+      <div class="verdict-row">
+        <button class="btn-correct" onclick="verdict(true)">🎯 正解！</button>
+        <button class="btn-wrong"   onclick="verdict(false)">😔 外れ…</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 結果画面 ══════════════════════════════════════ -->
+  <div id="screen-result" class="screen">
+    <header>
+      <div class="badge">🔍</div>
+      <h1>名探偵AI</h1>
+    </header>
+
+    <div class="result-banner" id="result-banner">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-msg"   id="result-msg"></div>
+    </div>
+
+    <!-- 捜査記録ツリー -->
+    <div class="case-file-wrap">
+      <div class="case-file-title">📂 捜査記録ファイル</div>
+      <div id="case-file-svg"></div>
+    </div>
+
+    <button class="btn-restart" onclick="resetGame()">🔍 新たな事件へ</button>
+  </div>
+
+</div><!-- /#app -->
+
+<script>
+// ── パーティクル生成 ─────────────────────────────────────────────
+(function() {
+  const container = document.getElementById('particles');
+  const symbols = ['🔍','?','!','…'];
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (10 + Math.random() * 14) + 's';
+    p.style.animationDelay    = (Math.random() * 14) + 's';
+    p.style.fontSize = (10 + Math.random() * 10) + 'px';
+    container.appendChild(p);
+  }
+})();
+
+// ── ゲーム状態 ───────────────────────────────────────────────────
+let history      = [];  // [{question, answer}, ...]
+let currentGuess = null;
+let waitingForAnswer = false;
+
+// ── 画面切替 ─────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── フラッシュ演出 ────────────────────────────────────────────────
+function flash() {
+  const div = document.createElement('div');
+  div.className = 'flash-overlay';
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 500);
+}
+
+// ── ゲーム開始 ───────────────────────────────────────────────────
+function startGame() {
+  history      = [];
+  currentGuess = null;
+  waitingForAnswer = false;
+  document.getElementById('evidence-list').innerHTML = '';
+  showScreen('screen-game');
+  askNext();
+}
+
+// ── 次の質問を取得 ───────────────────────────────────────────────
+async function askNext() {
+  if (waitingForAnswer) return;
+  setLoading(true);
+
+  try {
+    const res  = await fetch('/api/next', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history }),
+    });
+    const data = await res.json();
+
+    if (data.error) { alert('エラー: ' + data.error); return; }
+
+    if (data.type === 'question') {
+      showQuestion(data);
+    } else if (data.type === 'guess') {
+      showGuess(data);
+    }
+  } catch (e) {
+    alert('通信エラー: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  document.getElementById('loading-dots').classList.toggle('hidden', !on);
+  document.getElementById('question-text').classList.toggle('hidden', on);
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = on);
+  waitingForAnswer = on;
+}
+
+function showQuestion(data) {
+  document.getElementById('turn-num').textContent = data.turn;
+  document.getElementById('question-text').textContent = data.text;
+  waitingForAnswer = false;
+}
+
+// ── 回答 ─────────────────────────────────────────────────────────
+function answer(ans) {
+  if (waitingForAnswer) return;
+  const qText = document.getElementById('question-text').textContent;
+  history.push({ question: qText, answer: ans });
+  addEvidence(history.length, qText, ans);
+  flash();
+  askNext();
+}
+
+function addEvidence(num, question, ans) {
+  const labMap = {
+    yes: ['はい', 'yes'], no: ['いいえ', 'no'],
+    maybe: ['たぶんはい', 'maybe'], maybe_no: ['たぶんいいえ', 'maybe_no'],
+    dunno: ['わからない', 'dunno'],
+  };
+  const [label, cls] = labMap[ans] || [ans, ''];
+  const el = document.createElement('div');
+  el.className = 'evidence-item';
+  el.innerHTML = `
+    <span class="ev-q">Q${num}</span>
+    <span class="ev-text">${question}</span>
+    <span class="ev-ans ${cls}">${label}</span>
+  `;
+  const list = document.getElementById('evidence-list');
+  list.appendChild(el);
+  list.scrollTop = list.scrollHeight;
+}
+
+// ── 推理発表 ─────────────────────────────────────────────────────
+function showGuess(data) {
+  currentGuess = data;
+  document.getElementById('guess-answer-text').textContent     = data.answer;
+  document.getElementById('guess-confidence-text').textContent = `確信度 ${data.confidence}%`;
+  document.getElementById('guess-reason-text').textContent     = `「${data.reason}」`;
+  showScreen('screen-guess');
+}
+
+// ── 判定 ─────────────────────────────────────────────────────────
+async function verdict(correct) {
+  let actual = '';
+  if (!correct) {
+    actual = prompt('正解は何でしたか？') || '';
+  }
+
+  try {
+    const res  = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guess: currentGuess.answer, actual, correct }),
+    });
+    const data = await res.json();
+    showResult(correct, data.message, actual || currentGuess.answer);
+  } catch (e) {
+    showResult(correct, correct ? '事件解決！' : `正解は「${actual}」でしたか。`, actual || currentGuess.answer);
+  }
+}
+
+// ── 結果表示 ─────────────────────────────────────────────────────
+function showResult(correct, message, answer) {
+  const banner = document.getElementById('result-banner');
+  banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
+  document.getElementById('result-icon').textContent  = correct ? '🎉' : '🕵️';
+  document.getElementById('result-title').textContent = correct ? '事件解決！' : '謎は深まる…';
+  document.getElementById('result-msg').textContent   = message;
+
+  buildCaseFile(answer);
+  showScreen('screen-result');
+}
+
+// ── 捜査記録ツリー（SVG）────────────────────────────────────────
+function buildCaseFile(finalAnswer) {
+  const container = document.getElementById('case-file-svg');
+  container.innerHTML = '';
+
+  const QX=14, QW=210, QH=46, QCX=QX+QW/2;
+  const ROW=70, SY=16;
+  const EX=QX+QW+22, EW=160, EH=36;
+  const N = history.length;
+  const SVG_W = EX + EW + 12;
+  const SVG_H = SY + (N+1)*ROW + 80;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, a) {
+    const nd = document.createElementNS(NS, tag);
+    for (const [k,v] of Object.entries(a||{})) nd.setAttribute(k,v);
+    return nd;
+  }
+  function txt(p, x, y, str, fs, fw, fill, anchor) {
+    const t = el('text',{x,y,'text-anchor':anchor||'middle','font-size':fs||11,'font-weight':fw||'normal',fill:fill||'#C0A060'});
+    t.textContent = str;
+    p.appendChild(t);
+  }
+
+  const ansColor = {
+    yes:      '#4ADE80', no:       '#F87171',
+    maybe:    '#60A5FA', maybe_no: '#A78BFA', dunno: '#9CA3AF',
+  };
+  const ansLabel = {
+    yes:'はい', no:'いいえ', maybe:'たぶんはい', maybe_no:'たぶんいいえ', dunno:'わからない',
+  };
+
+  const svg = el('svg',{width:SVG_W, height:SVG_H, viewBox:`0 0 ${SVG_W} ${SVG_H}`});
+  svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:SVG_H,fill:'#12100A',rx:10}));
+
+  // マーカー
+  const defs = el('defs',{});
+  const mk = el('marker',{id:'ck-arr',markerWidth:8,markerHeight:6,refX:6,refY:3,orient:'auto'});
+  mk.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#8B6914'}));
+  defs.appendChild(mk);
+  const mg = el('marker',{id:'ck-gr',markerWidth:8,markerHeight:6,refX:6,refY:3,orient:'auto'});
+  mg.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#555'}));
+  defs.appendChild(mg);
+  svg.appendChild(defs);
+
+  // PASS1: 矢印
+  history.forEach((h, i) => {
+    const qy = SY + i * ROW, qcy = qy + QH/2;
+    const nextY = SY + (i+1) * ROW;
+    // 縦矢印
+    svg.appendChild(el('line',{x1:QCX,y1:qy+QH,x2:QCX,y2:nextY-2,
+      stroke:'#8B6914','stroke-width':1.8,'marker-end':'url(#ck-arr)'}));
+    // バッジ
+    const midY = (qy+QH+nextY)/2;
+    const col = ansColor[h.answer]||'#9CA3AF';
+    const lab = ansLabel[h.answer]||h.answer;
+    const bw = lab.length>4 ? 76 : 60;
+    svg.appendChild(el('rect',{x:QCX-bw/2,y:midY-10,width:bw,height:20,
+      fill:'#1A1208',stroke:col,'stroke-width':1,rx:10}));
+    txt(svg, QCX, midY+4, lab, 10, '700', col);
+    // 右矢印
+    svg.appendChild(el('line',{x1:QX+QW,y1:qcy,x2:EX-2,y2:qcy,
+      stroke:'#333','stroke-width':1.2,'stroke-dasharray':'4,3','marker-end':'url(#ck-gr)'}));
+  });
+
+  // PASS2: ボックス
+  history.forEach((h, i) => {
+    const qy = SY + i * ROW, qcy = qy + QH/2;
+    // 右の手がかりボックス
+    const eby = qcy - EH/2;
+    svg.appendChild(el('rect',{x:EX,y:eby,width:EW,height:EH,
+      fill:'#1A1208',stroke:'#2A2010','stroke-width':1,rx:7}));
+    txt(svg, EX+10, qcy-5, `Q${i+1}`, 9,'700','#4A3010','start');
+    const fs = h.question.length>12 ? 10 : 11;
+    txt(svg, EX+10, qcy+9, h.question, fs,'600','#806040','start');
+    // 質問ボックス
+    svg.appendChild(el('rect',{x:QX,y:qy,width:QW,height:QH,
+      fill:'#1E1608',stroke:'#8B6914','stroke-width':1.5,rx:9}));
+    txt(svg, QX+9, qy+14, `Q${i+1}`, 9,'700','#D4A017','start');
+    const fq = h.question.length>13 ? 10.5 : 12;
+    txt(svg, QCX, qy+QH/2+6, h.question, fq,'600','#F0E4C8');
+  });
+
+  // 正解ボックス
+  const ansY = SY + N * ROW;
+  svg.appendChild(el('rect',{x:QX,y:ansY,width:QW,height:54,
+    fill:'#251A04',stroke:'#D4A017','stroke-width':2.5,rx:12}));
+  txt(svg, QCX, ansY+22, '✦ 真犯人特定', 10,'normal','#8B6914');
+  txt(svg, QCX, ansY+44, finalAnswer, 18,'900','#D4A017');
+
+  container.appendChild(svg);
+}
+
+// ── リセット ─────────────────────────────────────────────────────
+function resetGame() {
+  history = [];
+  currentGuess = null;
+  document.getElementById('evidence-list').innerHTML = '';
+  showScreen('screen-start');
+}
+</script>
+</body>
+</html>

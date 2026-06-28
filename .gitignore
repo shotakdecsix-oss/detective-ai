@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+akinator_config.json
+*.log
+deploy.bat
+github_setup.py
