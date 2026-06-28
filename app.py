@@ -5,6 +5,7 @@ Config: akinator_config.json
 """
 
 import json, os, re, anthropic
+from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +22,9 @@ PORT          = int(CFG.get("port", 5052))
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 app    = Flask(__name__, static_folder=BASE_DIR)
+
+JST = timezone(timedelta(hours=9))
+SERVER_START = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
 
 # ---------------------------------------------------------------------------
 # システムプロンプト
@@ -134,6 +138,10 @@ def build_history_text(history: list[dict]) -> str:
 @app.route("/")
 def index():
     return send_from_directory(BASE_DIR, "index.html")
+
+@app.route("/api/info")
+def info():
+    return jsonify({"deployed_at": SERVER_START})
 
 @app.route("/api/next", methods=["POST"])
 def next_step():

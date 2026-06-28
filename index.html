@@ -410,6 +410,7 @@ h1 {
 <!-- パーティクル -->
 <div class="particles" id="particles"></div>
 
+<div id="deploy-info" style="position:fixed;top:6px;right:10px;font-size:10px;color:#4A3820;z-index:999;letter-spacing:.05em;"></div>
 <div id="app">
 
   <!-- ══ スタート画面 ══════════════════════════════════ -->
@@ -695,6 +696,11 @@ h1 {
     container.appendChild(p);
   }
 })();
+
+// ── デプロイ日時表示 ─────────────────────────────────────────────
+fetch('/api/info').then(r=>r.json()).then(d=>{
+  document.getElementById('deploy-info').textContent = '🚀 ' + (d.deployed_at || '');
+}).catch(()=>{});
 
 // ── ゲーム状態 ───────────────────────────────────────────────────
 let history      = [];  // [{question, answer}, ...]
