@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>名探偵AI</title>
+<title>名探偵あいちゃん</title>
 <style>
 /* ── リセット & ベース ─────────────────────────────────── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   min-height: 100vh;
-  background: #0D0A06;
-  color: #F0E4C8;
-  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif;
+  background: #FFF0F8;
+  color: #4A2D5A;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Meiryo', system-ui, sans-serif;
   overflow-x: hidden;
 }
 
@@ -20,24 +20,24 @@ body {
 .bg {
   position: fixed; inset: 0; z-index: 0;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(212,160,23,.12) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 80%, rgba(100,60,10,.15) 0%, transparent 45%),
-    #0D0A06;
+    radial-gradient(ellipse at 30% 0%, rgba(255,107,157,.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(192,132,252,.12) 0%, transparent 50%),
+    linear-gradient(160deg, #FFF0F8 0%, #F5EEFF 50%, #EEF2FF 100%);
 }
-/* 浮遊パーティクル（虫眼鏡） */
+
+/* 浮遊パーティクル */
 .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .particle {
   position: absolute;
   font-size: 14px;
   opacity: 0;
   animation: floatUp 12s infinite linear;
-  filter: sepia(1) brightness(.6);
 }
 @keyframes floatUp {
   0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
-  10%  { opacity: .25; }
+  10%  { opacity: .3; }
   90%  { opacity: .1; }
-  100% { transform: translateY(-10vh) rotate(40deg); opacity: 0; }
+  100% { transform: translateY(-10vh) rotate(30deg); opacity: 0; }
 }
 
 /* ── レイアウト ───────────────────────────────────────── */
@@ -47,148 +47,149 @@ body {
   display: flex; flex-direction: column; align-items: center;
   padding: 20px 16px 40px;
 }
-
 .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; }
 .screen.active { display: flex; }
 
 /* ── ヘッダー ─────────────────────────────────────────── */
-header {
-  text-align: center;
-  margin-bottom: 16px;
-}
+header { text-align: center; margin-bottom: 12px; }
 .badge {
   display: inline-block;
   width: 54px; height: 54px;
-  background: radial-gradient(circle, #D4A017, #8B6914);
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
   border-radius: 50%;
   font-size: 26px;
   line-height: 54px;
-  box-shadow: 0 0 20px rgba(212,160,23,.5), 0 0 40px rgba(212,160,23,.2);
+  box-shadow: 0 4px 18px rgba(255,107,157,.45), 0 0 32px rgba(192,132,252,.2);
   margin-bottom: 8px;
 }
 h1 {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 900;
-  letter-spacing: .15em;
-  color: #D4A017;
-  text-shadow: 0 0 20px rgba(212,160,23,.4);
+  letter-spacing: .1em;
+  background: linear-gradient(90deg, #FF6B9D, #9333EA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+h1 ruby rt { font-size: 9px; letter-spacing: .04em; }
 .subtitle {
   font-size: 11px;
-  color: #806040;
-  letter-spacing: .1em;
+  color: #C084FC;
+  letter-spacing: .08em;
   margin-top: 4px;
 }
 
-/* ── 探偵キャラ SVG ───────────────────────────────────── */
+/* ── あいちゃん SVG ───────────────────────────────────── */
 .detective-wrap {
-  margin: 8px 0 4px;
+  margin: 6px 0 4px;
   position: relative;
 }
 .detective-wrap svg {
-  filter: drop-shadow(0 4px 16px rgba(212,160,23,.3));
+  filter: drop-shadow(0 6px 18px rgba(255,107,157,.25));
 }
-/* パイプの煙アニメ */
-@keyframes smokeDrift {
-  0%   { transform: translate(0,0) scale(1);   opacity: .5; }
-  100% { transform: translate(-6px,-30px) scale(1.8); opacity: 0; }
-}
-.smoke1 { animation: smokeDrift 2s infinite ease-out; }
-.smoke2 { animation: smokeDrift 2s .6s infinite ease-out; }
-.smoke3 { animation: smokeDrift 2s 1.2s infinite ease-out; }
+
 /* 虫眼鏡の揺れ */
 @keyframes glassSwing {
-  0%,100% { transform-origin: 172px 218px; transform: rotate(0deg); }
-  50%      { transform-origin: 172px 218px; transform: rotate(6deg); }
+  0%,100% { transform-origin: 185px 220px; transform: rotate(0deg); }
+  50%      { transform-origin: 185px 220px; transform: rotate(7deg); }
 }
-.thinking-anim .magnifier { animation: glassSwing 2s ease-in-out infinite; }
+.thinking-anim .magnifier { animation: glassSwing 1.8s ease-in-out infinite; }
+
+/* キャラのふわふわ */
+@keyframes charBob {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.char-bob { animation: charBob 3s ease-in-out infinite; }
 
 /* ── スタート画面 ─────────────────────────────────────── */
 .start-card {
-  background: rgba(30,20,8,.8);
-  border: 1px solid #3A2A10;
-  border-radius: 16px;
-  padding: 24px;
+  background: rgba(255,255,255,.88);
+  border: 1.5px solid #FFDAEA;
+  border-radius: 20px;
+  padding: 22px 24px;
   text-align: center;
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(255,107,157,.1);
 }
 .start-card p {
   font-size: 14px;
-  color: #C0A060;
-  line-height: 1.8;
+  color: #7C3AED;
+  line-height: 1.9;
   margin-bottom: 20px;
 }
+.start-card p ruby rt { font-size: 9px; }
 .btn-start {
-  background: linear-gradient(135deg, #D4A017, #8B6914);
-  color: #0D0A06;
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
+  color: #fff;
   border: none;
   border-radius: 30px;
   padding: 14px 36px;
   font-size: 16px;
   font-weight: 900;
   font-family: inherit;
-  letter-spacing: .1em;
+  letter-spacing: .08em;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(212,160,23,.4);
+  box-shadow: 0 4px 18px rgba(255,107,157,.45);
   transition: all .2s;
 }
-.btn-start:hover { transform: scale(1.04); box-shadow: 0 6px 28px rgba(212,160,23,.6); }
+.btn-start:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(255,107,157,.6); }
 
 /* ── ターン表示 ───────────────────────────────────────── */
 .turn-display {
   font-size: 12px;
-  letter-spacing: .2em;
-  color: #806040;
+  letter-spacing: .15em;
+  color: #C084FC;
   margin: 4px 0 8px;
 }
-.turn-display span { color: #D4A017; font-size: 18px; font-weight: 900; }
+.turn-display span { color: #FF6B9D; font-size: 20px; font-weight: 900; }
 
 /* ── 質問カード ───────────────────────────────────────── */
 .question-card {
   width: 100%;
-  background: rgba(25,16,4,.9);
-  border: 1px solid #4A3010;
-  border-left: 3px solid #D4A017;
-  border-radius: 12px;
+  background: rgba(255,255,255,.9);
+  border: 1.5px solid #FFDAEA;
+  border-left: 4px solid #FF6B9D;
+  border-radius: 14px;
   padding: 20px;
   min-height: 80px;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   position: relative;
+  box-shadow: 0 2px 12px rgba(255,107,157,.1);
 }
 .question-card::before {
   content: '🔍';
   position: absolute; top: -14px; left: 16px;
-  background: #D4A017;
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
   border-radius: 50%;
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px;
-  box-shadow: 0 0 10px rgba(212,160,23,.5);
+  box-shadow: 0 2px 8px rgba(255,107,157,.4);
 }
 #question-text {
   font-size: 16px;
   line-height: 1.7;
-  color: #F0E4C8;
+  color: #4A2D5A;
   text-align: center;
-  letter-spacing: .05em;
+  letter-spacing: .04em;
 }
+
 /* ローディングドット */
-.dots {
-  display: flex; gap: 6px;
-}
+.dots { display: flex; gap: 6px; }
 .dots span {
-  width: 8px; height: 8px;
-  background: #D4A017;
+  width: 9px; height: 9px;
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
   border-radius: 50%;
   animation: bounce .9s infinite ease-in-out;
 }
 .dots span:nth-child(2) { animation-delay: .2s; }
 .dots span:nth-child(3) { animation-delay: .4s; }
 @keyframes bounce {
-  0%,100% { transform: translateY(0); opacity: .4; }
-  50%      { transform: translateY(-6px); opacity: 1; }
+  0%,100% { transform: translateY(0); opacity: .5; }
+  50%      { transform: translateY(-7px); opacity: 1; }
 }
 .hidden { display: none !important; }
 
@@ -196,45 +197,47 @@ h1 {
 .answer-buttons {
   display: flex; flex-direction: column; gap: 8px;
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .ans-btn {
   width: 100%;
   padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid;
+  border-radius: 12px;
+  border: 1.5px solid;
   font-size: 14px;
   font-family: inherit;
   font-weight: 700;
-  letter-spacing: .05em;
+  letter-spacing: .04em;
   cursor: pointer;
   transition: all .15s;
   text-align: left;
 }
-.ans-btn:hover { transform: translateX(4px); filter: brightness(1.15); }
+.ans-btn:hover { transform: translateX(5px); filter: brightness(1.05); }
 .ans-btn:active { transform: scale(.98); }
-.ans-btn[data-ans="yes"]      { background:#0D2B1A; border-color:#16A34A; color:#4ADE80; }
-.ans-btn[data-ans="no"]       { background:#2B0D0D; border-color:#DC2626; color:#F87171; }
-.ans-btn[data-ans="maybe"]    { background:#0D1A2B; border-color:#2563EB; color:#60A5FA; }
-.ans-btn[data-ans="maybe_no"] { background:#1A0D2B; border-color:#7C3AED; color:#A78BFA; }
-.ans-btn[data-ans="dunno"]    { background:#1A1A0D; border-color:#6B7280; color:#9CA3AF; }
+.ans-btn[data-ans="yes"]      { background:#DCFCE7; border-color:#16A34A; color:#166534; }
+.ans-btn[data-ans="no"]       { background:#FEE2E2; border-color:#DC2626; color:#991B1B; }
+.ans-btn[data-ans="maybe"]    { background:#DBEAFE; border-color:#2563EB; color:#1E40AF; }
+.ans-btn[data-ans="maybe_no"] { background:#EDE9FE; border-color:#7C3AED; color:#5B21B6; }
+.ans-btn[data-ans="dunno"]    { background:#F3F4F6; border-color:#9CA3AF; color:#374151; }
 .ans-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
-/* ── 証拠記録パネル ───────────────────────────────────── */
+/* ── 手がかり記録パネル ───────────────────────────────── */
 .evidence-panel {
   width: 100%;
-  background: rgba(18,12,4,.8);
-  border: 1px solid #2A1A08;
-  border-radius: 12px;
+  background: rgba(255,255,255,.85);
+  border: 1.5px solid #FFDAEA;
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 2px 10px rgba(255,107,157,.08);
 }
 .evidence-title {
-  background: rgba(212,160,23,.1);
-  border-bottom: 1px solid #2A1A08;
+  background: linear-gradient(90deg, rgba(255,107,157,.12), rgba(192,132,252,.08));
+  border-bottom: 1px solid #FFDAEA;
   padding: 8px 14px;
   font-size: 11px;
-  letter-spacing: .15em;
-  color: #806040;
+  letter-spacing: .12em;
+  color: #C084FC;
+  font-weight: 700;
 }
 #evidence-list {
   padding: 8px;
@@ -242,88 +245,91 @@ h1 {
   overflow-y: auto;
 }
 #evidence-list:empty::after {
-  content: '手がかりはまだない…';
+  content: 'まだてがかりはないよ…🔍';
   display: block;
   text-align: center;
   font-size: 11px;
-  color: #4A3020;
+  color: #DDD6FE;
   padding: 12px;
 }
 .evidence-item {
   display: flex; align-items: baseline; gap: 8px;
   padding: 5px 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 12px;
-  border-bottom: 1px solid #1A1008;
+  border-bottom: 1px solid #FEE2E2;
 }
 .evidence-item:last-child { border-bottom: none; }
-.ev-q { color: #806040; white-space: nowrap; font-size: 10px; }
-.ev-text { color: #C0A060; flex: 1; }
+.ev-q { color: #C084FC; white-space: nowrap; font-size: 10px; font-weight: 700; }
+.ev-text { color: #7C3AED; flex: 1; }
 .ev-ans { white-space: nowrap; font-weight: 700; font-size: 11px; }
-.ev-ans.yes      { color: #4ADE80; }
-.ev-ans.no       { color: #F87171; }
-.ev-ans.maybe    { color: #60A5FA; }
-.ev-ans.maybe_no { color: #A78BFA; }
-.ev-ans.dunno    { color: #9CA3AF; }
+.ev-ans.yes      { color: #16A34A; }
+.ev-ans.no       { color: #DC2626; }
+.ev-ans.maybe    { color: #2563EB; }
+.ev-ans.maybe_no { color: #7C3AED; }
+.ev-ans.dunno    { color: #6B7280; }
 
 /* ── 推理発表画面 ─────────────────────────────────────── */
-#screen-guess {
-  gap: 0;
-}
+#screen-guess { gap: 0; }
 .guess-card {
   width: 100%;
-  background: rgba(20,12,2,.95);
-  border: 2px solid #D4A017;
-  border-radius: 20px;
-  padding: 28px 24px;
+  background: rgba(255,255,255,.95);
+  border: 2.5px solid #FF6B9D;
+  border-radius: 22px;
+  padding: 26px 22px;
   text-align: center;
-  box-shadow: 0 0 40px rgba(212,160,23,.2), inset 0 0 30px rgba(0,0,0,.5);
-  margin-top: 12px;
+  box-shadow: 0 8px 32px rgba(255,107,157,.18), inset 0 0 20px rgba(255,240,248,.5);
+  margin-top: 10px;
 }
 .guess-label {
   font-size: 12px;
-  letter-spacing: .3em;
-  color: #806040;
-  margin-bottom: 16px;
+  letter-spacing: .2em;
+  color: #C084FC;
+  margin-bottom: 14px;
+  font-weight: 700;
 }
+.guess-label ruby rt { font-size: 8px; }
 .guess-answer {
   font-size: 36px;
   font-weight: 900;
-  color: #D4A017;
-  letter-spacing: .1em;
-  text-shadow: 0 0 20px rgba(212,160,23,.6);
+  background: linear-gradient(135deg, #FF6B9D, #9333EA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: .08em;
   margin-bottom: 12px;
   animation: revealPulse 1s ease-out;
 }
 @keyframes revealPulse {
   0%   { opacity: 0; transform: scale(.8); }
-  60%  { transform: scale(1.05); }
+  60%  { transform: scale(1.06); }
   100% { opacity: 1; transform: scale(1); }
 }
 .guess-confidence {
   display: inline-block;
-  background: rgba(212,160,23,.15);
-  border: 1px solid #8B6914;
+  background: linear-gradient(90deg, rgba(255,107,157,.12), rgba(192,132,252,.12));
+  border: 1px solid #FFDAEA;
   border-radius: 20px;
-  padding: 3px 14px;
+  padding: 4px 16px;
   font-size: 11px;
-  color: #D4A017;
+  color: #9333EA;
   margin-bottom: 12px;
+  font-weight: 700;
 }
+.guess-confidence ruby rt { font-size: 8px; }
 .guess-reason {
   font-size: 13px;
-  color: #A08040;
+  color: #9333EA;
   line-height: 1.7;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   font-style: italic;
+  opacity: 0.85;
 }
-.verdict-row {
-  display: flex; gap: 12px;
-}
+.verdict-row { display: flex; gap: 12px; }
 .btn-correct, .btn-wrong {
   flex: 1;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 2px solid;
   font-size: 15px;
   font-family: inherit;
@@ -332,68 +338,83 @@ h1 {
   transition: all .2s;
   letter-spacing: .05em;
 }
-.btn-correct { background:#0D2B1A; border-color:#16A34A; color:#4ADE80; }
-.btn-wrong   { background:#2B0D0D; border-color:#DC2626; color:#F87171; }
+.btn-correct { background:#DCFCE7; border-color:#16A34A; color:#166534; }
+.btn-wrong   { background:#FEE2E2; border-color:#DC2626; color:#991B1B; }
 .btn-correct:hover { background:#16A34A; color:#fff; }
 .btn-wrong:hover   { background:#DC2626; color:#fff; }
 
 /* ── 結果画面 ─────────────────────────────────────────── */
 .result-banner {
   width: 100%;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px;
   text-align: center;
-  margin: 12px 0 20px;
+  margin: 10px 0 18px;
 }
 .result-banner.solved {
-  background: linear-gradient(135deg, rgba(212,160,23,.2), rgba(212,160,23,.05));
-  border: 2px solid #D4A017;
+  background: linear-gradient(135deg, rgba(255,107,157,.15), rgba(192,132,252,.1));
+  border: 2px solid #FF6B9D;
 }
 .result-banner.failed {
-  background: rgba(30,10,10,.8);
-  border: 2px solid #4A2020;
+  background: rgba(237,233,254,.5);
+  border: 2px solid #C084FC;
 }
-.result-banner .result-icon { font-size: 40px; margin-bottom: 8px; }
-.result-banner .result-title { font-size: 20px; font-weight: 900; color: #D4A017; letter-spacing: .1em; }
-.result-banner .result-msg   { font-size: 13px; color: #A08040; margin-top: 6px; line-height: 1.6; }
+.result-banner .result-icon  { font-size: 40px; margin-bottom: 8px; }
+.result-banner .result-title {
+  font-size: 20px; font-weight: 900;
+  background: linear-gradient(90deg, #FF6B9D, #9333EA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: .08em;
+}
+.result-banner .result-title ruby rt { font-size: 10px; }
+.result-banner .result-msg   { font-size: 13px; color: #7C3AED; margin-top: 6px; line-height: 1.7; }
 
 /* 捜査記録ツリー */
 .case-file-wrap {
   width: 100%;
-  background: rgba(18,12,4,.8);
-  border: 1px solid #2A1A08;
-  border-radius: 12px;
+  background: rgba(255,255,255,.85);
+  border: 1.5px solid #FFDAEA;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 10px rgba(255,107,157,.08);
 }
 .case-file-title {
-  background: rgba(212,160,23,.1);
-  border-bottom: 1px solid #2A1A08;
+  background: linear-gradient(90deg, rgba(255,107,157,.12), rgba(192,132,252,.08));
+  border-bottom: 1px solid #FFDAEA;
   padding: 10px 16px;
   font-size: 11px;
-  letter-spacing: .2em;
-  color: #806040;
+  letter-spacing: .15em;
+  color: #C084FC;
+  font-weight: 700;
 }
+.case-file-title ruby rt { font-size: 8px; }
 #case-file-svg { width: 100%; overflow-x: auto; }
 
 .btn-restart {
   background: transparent;
-  border: 1px solid #4A3010;
+  border: 1.5px solid #FFDAEA;
   border-radius: 30px;
   padding: 12px 32px;
   font-size: 14px;
   font-family: inherit;
-  color: #806040;
+  color: #C084FC;
   cursor: pointer;
-  letter-spacing: .1em;
+  letter-spacing: .08em;
   transition: all .2s;
+  font-weight: 700;
 }
-.btn-restart:hover { border-color: #D4A017; color: #D4A017; }
+.btn-restart:hover {
+  border-color: #FF6B9D; color: #FF6B9D;
+  background: rgba(255,107,157,.05);
+}
 
 /* ── フラッシュ演出 ───────────────────────────────────── */
 .flash-overlay {
   position: fixed; inset: 0; z-index: 999;
-  background: rgba(212,160,23,.15);
+  background: rgba(255,107,157,.12);
   pointer-events: none;
   animation: flashIn .4s ease-out forwards;
 }
@@ -401,113 +422,146 @@ h1 {
   0%   { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* ruby タグ共通 */
+ruby { ruby-align: center; }
+rt { font-size: 9px; color: #C084FC; }
 </style>
 </head>
 <body>
 
 <div class="bg"></div>
-
-<!-- パーティクル -->
 <div class="particles" id="particles"></div>
+<div id="deploy-info" style="position:fixed;top:6px;right:10px;font-size:10px;color:#C084FC;z-index:999;letter-spacing:.05em;"></div>
 
-<div id="deploy-info" style="position:fixed;top:6px;right:10px;font-size:10px;color:#806040;z-index:999;letter-spacing:.05em;"></div>
 <div id="app">
 
   <!-- ══ スタート画面 ══════════════════════════════════ -->
   <div id="screen-start" class="screen active">
     <header>
       <div class="badge">🔍</div>
-      <h1>名探偵AI</h1>
-      <p class="subtitle">はい・いいえだけで真実を突き止める</p>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
+      <p class="subtitle">はい・いいえだけで<ruby>真実<rt>しんじつ</rt></ruby>を<ruby>突<rt>つ</rt></ruby>き<ruby>止<rt>と</rt></ruby>める！</p>
     </header>
 
-    <!-- 探偵キャラ -->
+    <!-- あいちゃんキャラ（大） -->
     <div class="detective-wrap">
-      <svg viewBox="0 0 220 310" width="170" height="240">
+      <svg viewBox="0 0 220 310" width="170" height="240" class="char-bob">
         <defs>
-          <radialGradient id="glow-gold" cx="50%" cy="100%" r="60%">
-            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          <radialGradient id="glow-pink-s" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#FF6B9D" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#FF6B9D" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <!-- 足元の光 -->
-        <ellipse cx="110" cy="295" rx="70" ry="15" fill="url(#glow-gold)"/>
-
-        <!-- トレンチコート -->
-        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
-        <!-- コートのライン -->
-        <path d="M90 148 L110 176 L130 148" fill="#1A1208" stroke="#120C04" stroke-width="1"/>
-        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
+        <!-- 足元グロー -->
+        <ellipse cx="110" cy="296" rx="72" ry="14" fill="url(#glow-pink-s)"/>
+        <!-- スカート裾 -->
+        <path d="M62 228 Q50 278 54 295 L166 295 Q170 278 158 228Z" fill="#C084FC"/>
+        <path d="M54 290 Q70 283 86 290 Q102 297 118 290 Q134 283 150 290 Q162 297 168 290" fill="none" stroke="#E9D5FF" stroke-width="3" stroke-linecap="round"/>
+        <!-- コート本体（ピンク） -->
+        <path d="M65 150 Q45 220 62 228 L158 228 Q175 220 155 150 Q135 165 110 165 Q85 165 65 150Z" fill="#FF8FAB"/>
+        <!-- コート中央V -->
+        <path d="M92 150 L110 178 L128 150" fill="#FF6B9D"/>
+        <line x1="110" y1="178" x2="110" y2="228" stroke="#FF6B9D" stroke-width="2.5"/>
         <!-- ボタン -->
-        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
-        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
-        <circle cx="110" cy="248" r="4" fill="#3A2A10"/>
-        <!-- 左ラペル -->
-        <path d="M90 148 Q72 168 68 188" stroke="#3A2A10" stroke-width="2" fill="none"/>
-        <!-- 右ラペル -->
-        <path d="M130 148 Q148 168 152 188" stroke="#3A2A10" stroke-width="2" fill="none"/>
-
+        <circle cx="110" cy="196" r="5" fill="#9333EA"/>
+        <circle cx="110" cy="216" r="5" fill="#9333EA"/>
+        <!-- ポケット -->
+        <path d="M76 188 Q70 198 72 208 Q78 210 86 208 Q88 198 82 188Z" fill="none" stroke="#FFB5C8" stroke-width="1.5"/>
         <!-- 左腕 -->
-        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <path d="M67 157 Q40 200 32 238" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
         <!-- 左手 -->
-        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
-
+        <ellipse cx="28" cy="243" rx="13" ry="10" fill="#FFCAB0" transform="rotate(-20,28,243)"/>
+        <circle cx="18" cy="238" r="5" fill="#FFCAB0"/>
+        <circle cx="16" cy="248" r="5" fill="#FFCAB0"/>
         <!-- 右腕 -->
-        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <path d="M153 157 Q180 196 187 222" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
         <!-- 虫眼鏡 -->
         <g class="magnifier">
-          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
-          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
-          <!-- レンズの光沢 -->
-          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
-          <!-- グリップ -->
-          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="194" cy="230" r="22" fill="none" stroke="#A855F7" stroke-width="5"/>
+          <circle cx="194" cy="230" r="17" fill="rgba(168,85,247,0.1)"/>
+          <ellipse cx="187" cy="222" rx="6" ry="4" fill="#E9D5FF" opacity="0.65" transform="rotate(-30,187,222)"/>
+          <circle cx="196" cy="224" r="2" fill="#fff" opacity="0.8"/>
+          <line x1="209" y1="246" x2="220" y2="257" stroke="#7E22CE" stroke-width="7" stroke-linecap="round"/>
         </g>
-
         <!-- 首 -->
-        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
-
+        <rect x="97" y="124" width="26" height="28" rx="10" fill="#FFCAB0"/>
+        <!-- 後ろ髪 -->
+        <ellipse cx="110" cy="82" rx="42" ry="46" fill="#6D28D9"/>
+        <!-- ツインテール（左） -->
+        <path d="M68 108 Q42 138 36 174 Q32 210 44 236 Q54 240 60 226 Q50 200 58 168 Q68 140 76 116Z" fill="#7C3AED"/>
+        <!-- ツインテール（右） -->
+        <path d="M152 108 Q178 138 184 174 Q188 210 176 236 Q166 240 160 226 Q170 200 162 168 Q152 140 144 116Z" fill="#7C3AED"/>
         <!-- 顔 -->
-        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
-        <!-- 顔の影（帽子のつば） -->
-        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.72"/>
-
-        <!-- 輝く目 -->
-        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <!-- 目のハイライト -->
-        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
-        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
-
-        <!-- 口ひげ -->
-        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-
-        <!-- パイプ -->
-        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C" stroke="#4A2A0E" stroke-width="1"/>
-        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
-        <!-- 煙 -->
-        <circle class="smoke1" cx="134" cy="107" r="4" fill="#666" opacity="0.5"/>
-        <circle class="smoke2" cx="130" cy="94" r="5" fill="#666" opacity="0.35"/>
-        <circle class="smoke3" cx="136" cy="82" r="6" fill="#666" opacity="0.2"/>
-
-        <!-- ハット（帽子）最前面 -->
-        <!-- ハット本体 -->
-        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
-        <!-- 前つば -->
-        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
-        <!-- 後ろつば -->
-        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
-        <!-- ハットバンド -->
-        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
-        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+        <ellipse cx="110" cy="104" rx="36" ry="33" fill="#FFCAB0"/>
+        <!-- ほっぺ -->
+        <ellipse cx="88" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="132" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <!-- 白目 -->
+        <ellipse cx="96" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="124" cy="100" rx="11" ry="12" fill="#fff"/>
+        <!-- 虹彩 -->
+        <ellipse cx="96" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="124" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <!-- 瞳孔 -->
+        <ellipse cx="96" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <ellipse cx="124" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <!-- ハイライト -->
+        <circle cx="99" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="127" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="93" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <circle cx="121" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <!-- まつ毛 -->
+        <line x1="84" y1="90" x2="87" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="91" y1="88" x2="91" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="99" y1="88" x2="101" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="113" y1="88" x2="115" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="120" y1="88" x2="120" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="127" y1="88" x2="129" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <!-- 上まぶた -->
+        <path d="M84 96 Q96 88 108 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M112 96 Q124 88 136 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- 眉毛 -->
+        <path d="M86 86 Q96 80 106 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M114 86 Q124 80 134 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- 鼻 -->
+        <circle cx="110" cy="113" r="2.5" fill="#FFAA9A" opacity="0.7"/>
+        <!-- 笑顔 -->
+        <path d="M97 120 Q110 131 123 120" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- 前髪 -->
+        <ellipse cx="110" cy="70" rx="38" ry="27" fill="#7C3AED"/>
+        <path d="M72 88 Q68 70 80 64 Q90 68 94 76" fill="#7C3AED"/>
+        <path d="M148 88 Q152 70 140 64 Q130 68 126 76" fill="#7C3AED"/>
+        <path d="M88 80 Q96 62 110 58 Q124 62 132 80" fill="#6D28D9"/>
+        <!-- リボン（左） -->
+        <path d="M58 112 Q67 106 72 112 Q67 118 58 112Z" fill="#FF6B9D"/>
+        <path d="M72 112 Q81 106 88 112 Q81 118 72 112Z" fill="#FF6B9D"/>
+        <circle cx="72" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="72" cy="112" r="2.5" fill="#FF6B9D"/>
+        <!-- リボン（右） -->
+        <path d="M162 112 Q153 106 148 112 Q153 118 162 112Z" fill="#FF6B9D"/>
+        <path d="M148 112 Q139 106 132 112 Q139 118 148 112Z" fill="#FF6B9D"/>
+        <circle cx="148" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="148" cy="112" r="2.5" fill="#FF6B9D"/>
+        <!-- ベレー帽 -->
+        <ellipse cx="112" cy="55" rx="33" ry="19" fill="#6D28D9" transform="rotate(-12 112 55)"/>
+        <ellipse cx="112" cy="50" rx="26" ry="16" fill="#7C3AED" transform="rotate(-12 112 50)"/>
+        <path d="M79 62 Q112 68 145 58" stroke="#4C1D95" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- ポンポン -->
+        <circle cx="122" cy="39" r="7" fill="#C084FC"/>
+        <circle cx="122" cy="39" r="4" fill="#DDD6FE"/>
+        <!-- バッジ -->
+        <text x="104" y="60" font-size="13" text-anchor="middle">⭐</text>
       </svg>
     </div>
 
     <div class="start-card">
-      <p>何かを頭の中でイメージしてください。<br>人・物・概念、なんでも構いません。<br>名探偵が必ず真実を突き止めます。</p>
-      <button class="btn-start" onclick="startGame()">🔍 捜査開始</button>
+      <p>
+        なにかを<ruby>頭<rt>あたま</rt></ruby>の<ruby>中<rt>なか</rt></ruby>でイメージしてね。<br>
+        <ruby>人<rt>ひと</rt></ruby>・<ruby>動物<rt>どうぶつ</rt></ruby>・ものなど、なんでもいいよ。<br>
+        あいちゃんが<ruby>必<rt>かなら</rt></ruby>ず<ruby>当<rt>あ</rt></ruby>ててみせる！
+      </p>
+      <button class="btn-start" onclick="startGame()">🔍 <ruby>捜査<rt>そうさ</rt></ruby>かいし！</button>
     </div>
   </div>
 
@@ -515,56 +569,87 @@ h1 {
   <div id="screen-game" class="screen">
     <header>
       <div class="badge">🔍</div>
-      <h1>名探偵AI</h1>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
     </header>
 
     <div class="detective-wrap thinking-anim">
-      <svg viewBox="0 0 220 310" width="130" height="184">
+      <svg viewBox="0 0 220 310" width="120" height="170">
         <defs>
-          <radialGradient id="glow-gold2" cx="50%" cy="100%" r="60%">
-            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.2"/>
-            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          <radialGradient id="glow-pink-g" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#FF6B9D" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#FF6B9D" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <ellipse cx="110" cy="295" rx="70" ry="15" fill="url(#glow-gold2)"/>
-        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
-        <path d="M90 148 L110 176 L130 148" fill="#1A1208"/>
-        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
-        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
-        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
-        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
-        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
-        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="296" rx="72" ry="14" fill="url(#glow-pink-g)"/>
+        <path d="M62 228 Q50 278 54 295 L166 295 Q170 278 158 228Z" fill="#C084FC"/>
+        <path d="M54 290 Q70 283 86 290 Q102 297 118 290 Q134 283 150 290 Q162 297 168 290" fill="none" stroke="#E9D5FF" stroke-width="3" stroke-linecap="round"/>
+        <path d="M65 150 Q45 220 62 228 L158 228 Q175 220 155 150 Q135 165 110 165 Q85 165 65 150Z" fill="#FF8FAB"/>
+        <path d="M92 150 L110 178 L128 150" fill="#FF6B9D"/>
+        <line x1="110" y1="178" x2="110" y2="228" stroke="#FF6B9D" stroke-width="2.5"/>
+        <circle cx="110" cy="196" r="5" fill="#9333EA"/>
+        <circle cx="110" cy="216" r="5" fill="#9333EA"/>
+        <path d="M67 157 Q40 200 32 238" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="243" rx="13" ry="10" fill="#FFCAB0" transform="rotate(-20,28,243)"/>
+        <path d="M153 157 Q180 196 187 222" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
         <g class="magnifier">
-          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
-          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
-          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
-          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="194" cy="230" r="22" fill="none" stroke="#A855F7" stroke-width="5"/>
+          <circle cx="194" cy="230" r="17" fill="rgba(168,85,247,0.1)"/>
+          <ellipse cx="187" cy="222" rx="6" ry="4" fill="#E9D5FF" opacity="0.65" transform="rotate(-30,187,222)"/>
+          <circle cx="196" cy="224" r="2" fill="#fff" opacity="0.8"/>
+          <line x1="209" y1="246" x2="220" y2="257" stroke="#7E22CE" stroke-width="7" stroke-linecap="round"/>
         </g>
-        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
-        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
-        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.72"/>
-        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
-        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
-        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C"/>
-        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
-        <circle class="smoke1" cx="134" cy="107" r="4" fill="#666" opacity="0.5"/>
-        <circle class="smoke2" cx="130" cy="94" r="5" fill="#666" opacity="0.35"/>
-        <circle class="smoke3" cx="136" cy="82" r="6" fill="#666" opacity="0.2"/>
-        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
-        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
-        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
-        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
-        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+        <rect x="97" y="124" width="26" height="28" rx="10" fill="#FFCAB0"/>
+        <ellipse cx="110" cy="82" rx="42" ry="46" fill="#6D28D9"/>
+        <path d="M68 108 Q42 138 36 174 Q32 210 44 236 Q54 240 60 226 Q50 200 58 168 Q68 140 76 116Z" fill="#7C3AED"/>
+        <path d="M152 108 Q178 138 184 174 Q188 210 176 236 Q166 240 160 226 Q170 200 162 168 Q152 140 144 116Z" fill="#7C3AED"/>
+        <ellipse cx="110" cy="104" rx="36" ry="33" fill="#FFCAB0"/>
+        <ellipse cx="88" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="132" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="96" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="124" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="96" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="124" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="96" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <ellipse cx="124" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <circle cx="99" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="127" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="93" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <circle cx="121" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <line x1="84" y1="90" x2="87" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="91" y1="88" x2="91" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="99" y1="88" x2="101" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="113" y1="88" x2="115" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="120" y1="88" x2="120" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="127" y1="88" x2="129" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <path d="M84 96 Q96 88 108 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M112 96 Q124 88 136 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M86 86 Q96 80 106 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M114 86 Q124 80 134 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="110" cy="113" r="2.5" fill="#FFAA9A" opacity="0.7"/>
+        <!-- 考え中の顔：ちょっと口をとがらせる -->
+        <path d="M100 122 Q110 126 120 122" stroke="#FF6B9D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="70" rx="38" ry="27" fill="#7C3AED"/>
+        <path d="M72 88 Q68 70 80 64 Q90 68 94 76" fill="#7C3AED"/>
+        <path d="M148 88 Q152 70 140 64 Q130 68 126 76" fill="#7C3AED"/>
+        <path d="M88 80 Q96 62 110 58 Q124 62 132 80" fill="#6D28D9"/>
+        <path d="M58 112 Q67 106 72 112 Q67 118 58 112Z" fill="#FF6B9D"/>
+        <path d="M72 112 Q81 106 88 112 Q81 118 72 112Z" fill="#FF6B9D"/>
+        <circle cx="72" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="72" cy="112" r="2.5" fill="#FF6B9D"/>
+        <path d="M162 112 Q153 106 148 112 Q153 118 162 112Z" fill="#FF6B9D"/>
+        <path d="M148 112 Q139 106 132 112 Q139 118 148 112Z" fill="#FF6B9D"/>
+        <circle cx="148" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="148" cy="112" r="2.5" fill="#FF6B9D"/>
+        <ellipse cx="112" cy="55" rx="33" ry="19" fill="#6D28D9" transform="rotate(-12 112 55)"/>
+        <ellipse cx="112" cy="50" rx="26" ry="16" fill="#7C3AED" transform="rotate(-12 112 50)"/>
+        <path d="M79 62 Q112 68 145 58" stroke="#4C1D95" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="122" cy="39" r="7" fill="#C084FC"/>
+        <circle cx="122" cy="39" r="4" fill="#DDD6FE"/>
+        <text x="104" y="60" font-size="13" text-anchor="middle">⭐</text>
       </svg>
     </div>
 
-    <div class="turn-display">第 <span id="turn-num">1</span> 問</div>
+    <div class="turn-display">だい <span id="turn-num">1</span> もん</div>
 
     <div class="question-card">
       <div class="dots" id="loading-dots">
@@ -582,7 +667,7 @@ h1 {
     </div>
 
     <div class="evidence-panel">
-      <div class="evidence-title">📋 手がかり記録</div>
+      <div class="evidence-title">📋 <ruby>手<rt>て</rt></ruby>がかり<ruby>記録<rt>きろく</rt></ruby></div>
       <div id="evidence-list"></div>
     </div>
   </div>
@@ -591,60 +676,94 @@ h1 {
   <div id="screen-guess" class="screen">
     <header>
       <div class="badge">🔍</div>
-      <h1>名探偵AI</h1>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
     </header>
 
     <div class="detective-wrap" style="margin-bottom:4px">
-      <svg viewBox="0 0 220 310" width="130" height="184">
+      <svg viewBox="0 0 220 310" width="120" height="170">
         <defs>
-          <radialGradient id="glow-gold3" cx="50%" cy="100%" r="60%">
-            <stop offset="0%" stop-color="#D4A017" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+          <radialGradient id="glow-pink-r" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#FF6B9D" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#FF6B9D" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <ellipse cx="110" cy="295" rx="80" ry="18" fill="url(#glow-gold3)"/>
-        <path d="M60 148 Q38 215 44 295 L176 295 Q182 215 160 148 Q138 164 110 164 Q82 164 60 148Z" fill="#2A2010"/>
-        <path d="M90 148 L110 176 L130 148" fill="#1A1208"/>
-        <line x1="110" y1="176" x2="110" y2="260" stroke="#1A1208" stroke-width="2"/>
-        <circle cx="110" cy="200" r="4" fill="#3A2A10"/>
-        <circle cx="110" cy="224" r="4" fill="#3A2A10"/>
-        <path d="M62 155 Q34 200 28 240" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
-        <ellipse cx="25" cy="246" rx="14" ry="10" fill="#C0906A" transform="rotate(-20,25,246)"/>
-        <path d="M158 155 Q186 196 192 225" stroke="#2A2010" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="296" rx="80" ry="16" fill="url(#glow-pink-r)"/>
+        <path d="M62 228 Q50 278 54 295 L166 295 Q170 278 158 228Z" fill="#C084FC"/>
+        <path d="M54 290 Q70 283 86 290 Q102 297 118 290 Q134 283 150 290 Q162 297 168 290" fill="none" stroke="#E9D5FF" stroke-width="3" stroke-linecap="round"/>
+        <path d="M65 150 Q45 220 62 228 L158 228 Q175 220 155 150 Q135 165 110 165 Q85 165 65 150Z" fill="#FF8FAB"/>
+        <path d="M92 150 L110 178 L128 150" fill="#FF6B9D"/>
+        <line x1="110" y1="178" x2="110" y2="228" stroke="#FF6B9D" stroke-width="2.5"/>
+        <circle cx="110" cy="196" r="5" fill="#9333EA"/>
+        <circle cx="110" cy="216" r="5" fill="#9333EA"/>
+        <path d="M67 157 Q40 200 32 238" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="243" rx="13" ry="10" fill="#FFCAB0" transform="rotate(-20,28,243)"/>
+        <path d="M153 157 Q180 196 187 222" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
         <g>
-          <circle cx="198" cy="234" r="24" fill="none" stroke="#D4A017" stroke-width="5"/>
-          <circle cx="198" cy="234" r="20" fill="rgba(212,160,23,0.08)"/>
-          <ellipse cx="190" cy="226" rx="7" ry="5" fill="#D4A017" opacity="0.2" transform="rotate(-30,190,226)"/>
-          <line x1="215" y1="251" x2="226" y2="262" stroke="#8B6914" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="194" cy="230" r="22" fill="none" stroke="#A855F7" stroke-width="5"/>
+          <circle cx="194" cy="230" r="17" fill="rgba(168,85,247,0.1)"/>
+          <ellipse cx="187" cy="222" rx="6" ry="4" fill="#E9D5FF" opacity="0.65" transform="rotate(-30,187,222)"/>
+          <circle cx="196" cy="224" r="2" fill="#fff" opacity="0.8"/>
+          <line x1="209" y1="246" x2="220" y2="257" stroke="#7E22CE" stroke-width="7" stroke-linecap="round"/>
         </g>
-        <rect x="96" y="126" width="28" height="26" rx="9" fill="#C0906A"/>
-        <ellipse cx="110" cy="108" rx="36" ry="32" fill="#C0906A"/>
-        <ellipse cx="110" cy="96" rx="36" ry="19" fill="#0D0A06" opacity="0.55"/>
-        <ellipse cx="97" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="123" cy="102" rx="8" ry="5" fill="#D4A017"/>
-        <ellipse cx="97" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <ellipse cx="123" cy="102" rx="5" ry="3" fill="#FFD700" opacity="0.9"/>
-        <circle cx="94" cy="100" r="2" fill="#fff" opacity="0.6"/>
-        <circle cx="120" cy="100" r="2" fill="#fff" opacity="0.6"/>
-        <path d="M96 118 Q110 113 124 118" stroke="#5C3D1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path d="M118 122 Q132 116 135 126 Q138 136 128 136 L116 133Z" fill="#6B3E1C"/>
-        <ellipse cx="135" cy="126" rx="6" ry="5" fill="#5A2C0A"/>
-        <rect x="70" y="38" width="80" height="52" rx="10" fill="#2A2010"/>
-        <ellipse cx="110" cy="90" rx="58" ry="13" fill="#1E1608"/>
-        <ellipse cx="110" cy="72" rx="48" ry="9" fill="#241C0A"/>
-        <rect x="70" y="76" width="80" height="8" rx="2" fill="#1A1208"/>
-        <rect x="70" y="78" width="80" height="3" fill="#8B6914" opacity="0.4"/>
+        <rect x="97" y="124" width="26" height="28" rx="10" fill="#FFCAB0"/>
+        <ellipse cx="110" cy="82" rx="42" ry="46" fill="#6D28D9"/>
+        <path d="M68 108 Q42 138 36 174 Q32 210 44 236 Q54 240 60 226 Q50 200 58 168 Q68 140 76 116Z" fill="#7C3AED"/>
+        <path d="M152 108 Q178 138 184 174 Q188 210 176 236 Q166 240 160 226 Q170 200 162 168 Q152 140 144 116Z" fill="#7C3AED"/>
+        <ellipse cx="110" cy="104" rx="36" ry="33" fill="#FFCAB0"/>
+        <ellipse cx="88" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="132" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="96" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="124" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="96" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="124" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="96" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <ellipse cx="124" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <circle cx="99" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="127" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="93" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <circle cx="121" cy="106" r="2" fill="#fff" opacity="0.65"/>
+        <line x1="84" y1="90" x2="87" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="91" y1="88" x2="91" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="99" y1="88" x2="101" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="113" y1="88" x2="115" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="120" y1="88" x2="120" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="127" y1="88" x2="129" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <path d="M84 96 Q96 88 108 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M112 96 Q124 88 136 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M86 86 Q96 80 106 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M114 86 Q124 80 134 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="110" cy="113" r="2.5" fill="#FFAA9A" opacity="0.7"/>
+        <!-- 自信満々の笑顔 -->
+        <path d="M95 120 Q110 134 125 120" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="70" rx="38" ry="27" fill="#7C3AED"/>
+        <path d="M72 88 Q68 70 80 64 Q90 68 94 76" fill="#7C3AED"/>
+        <path d="M148 88 Q152 70 140 64 Q130 68 126 76" fill="#7C3AED"/>
+        <path d="M88 80 Q96 62 110 58 Q124 62 132 80" fill="#6D28D9"/>
+        <path d="M58 112 Q67 106 72 112 Q67 118 58 112Z" fill="#FF6B9D"/>
+        <path d="M72 112 Q81 106 88 112 Q81 118 72 112Z" fill="#FF6B9D"/>
+        <circle cx="72" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="72" cy="112" r="2.5" fill="#FF6B9D"/>
+        <path d="M162 112 Q153 106 148 112 Q153 118 162 112Z" fill="#FF6B9D"/>
+        <path d="M148 112 Q139 106 132 112 Q139 118 148 112Z" fill="#FF6B9D"/>
+        <circle cx="148" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="148" cy="112" r="2.5" fill="#FF6B9D"/>
+        <ellipse cx="112" cy="55" rx="33" ry="19" fill="#6D28D9" transform="rotate(-12 112 55)"/>
+        <ellipse cx="112" cy="50" rx="26" ry="16" fill="#7C3AED" transform="rotate(-12 112 50)"/>
+        <path d="M79 62 Q112 68 145 58" stroke="#4C1D95" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="122" cy="39" r="7" fill="#C084FC"/>
+        <circle cx="122" cy="39" r="4" fill="#DDD6FE"/>
+        <text x="104" y="60" font-size="13" text-anchor="middle">⭐</text>
       </svg>
     </div>
 
     <div class="guess-card">
-      <p class="guess-label">推理の結果…真犯人は</p>
+      <p class="guess-label"><ruby>推理<rt>すいり</rt></ruby>のけっか…<ruby>犯人<rt>はんにん</rt></ruby>は！</p>
       <div class="guess-answer" id="guess-answer-text"></div>
       <div class="guess-confidence" id="guess-confidence-text"></div>
       <p class="guess-reason" id="guess-reason-text"></p>
       <div class="verdict-row">
-        <button class="btn-correct" onclick="verdict(true)">🎯 正解！</button>
-        <button class="btn-wrong"   onclick="verdict(false)">😔 外れ…</button>
+        <button class="btn-correct" onclick="verdict(true)">🎯 せいかい！</button>
+        <button class="btn-wrong"   onclick="verdict(false)">😔 はずれ…</button>
       </div>
     </div>
   </div>
@@ -653,7 +772,7 @@ h1 {
   <div id="screen-result" class="screen">
     <header>
       <div class="badge">🔍</div>
-      <h1>名探偵AI</h1>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
     </header>
 
     <div class="result-banner" id="result-banner">
@@ -662,30 +781,30 @@ h1 {
       <div class="result-msg"   id="result-msg"></div>
     </div>
 
-    <!-- ギャップ分析パネル（不正解時のみ表示） -->
-    <div id="gap-analysis" style="display:none; width:100%; background:rgba(60,15,10,.7); border:1px solid #6A2020; border-radius:14px; padding:14px 16px; margin-bottom:16px;">
-      <div style="font-size:11px; letter-spacing:.2em; color:#C05040; margin-bottom:10px;">🔬 推理ギャップ分析</div>
-      <div id="gap-why" style="font-size:12px; color:#D4907A; line-height:1.7; margin-bottom:8px;"></div>
-      <div id="gap-key" style="font-size:12px; color:#A06850; line-height:1.7; border-top:1px solid #4A1A10; padding-top:8px; margin-top:4px;"></div>
+    <!-- ギャップ分析パネル（不正解時のみ） -->
+    <div id="gap-analysis" style="display:none; width:100%; background:rgba(237,233,254,.6); border:1.5px solid #C084FC; border-radius:14px; padding:14px 16px; margin-bottom:16px;">
+      <div style="font-size:11px; letter-spacing:.15em; color:#9333EA; margin-bottom:10px; font-weight:700;">🔬 <ruby>推理<rt>すいり</rt></ruby>ギャップ<ruby>分析<rt>ぶんせき</rt></ruby></div>
+      <div id="gap-why" style="font-size:12px; color:#7C3AED; line-height:1.7; margin-bottom:8px;"></div>
+      <div id="gap-key" style="font-size:12px; color:#9333EA; line-height:1.7; border-top:1px solid #DDD6FE; padding-top:8px; margin-top:4px;"></div>
     </div>
 
     <!-- 捜査記録ツリー -->
     <div class="case-file-wrap">
-      <div class="case-file-title">📂 捜査記録ファイル</div>
+      <div class="case-file-title">📂 <ruby>捜査<rt>そうさ</rt></ruby><ruby>記録<rt>きろく</rt></ruby>ファイル</div>
       <div id="case-file-svg"></div>
     </div>
 
-    <button class="btn-restart" onclick="resetGame()">🔍 新たな事件へ</button>
+    <button class="btn-restart" onclick="resetGame()">🔍 あたらしい<ruby>事件<rt>じけん</rt></ruby>へ</button>
   </div>
 
 </div><!-- /#app -->
 
 <script>
-// ── パーティクル生成 ─────────────────────────────────────────────
+// ── パーティクル生成（かわいい） ─────────────────────────────────
 (function() {
   const container = document.getElementById('particles');
-  const symbols = ['🔍','?','!','…'];
-  for (let i = 0; i < 14; i++) {
+  const symbols = ['✨','💫','⭐','🌸','💗','🔍'];
+  for (let i = 0; i < 16; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
@@ -697,13 +816,13 @@ h1 {
   }
 })();
 
-// ── デプロイ日時表示 ─────────────────────────────────────────────
+// ── デプロイ日時 ─────────────────────────────────────────────────
 fetch('/api/info').then(r=>r.json()).then(d=>{
   document.getElementById('deploy-info').textContent = '🚀 ' + (d.deployed_at || '');
 }).catch(()=>{});
 
 // ── ゲーム状態 ───────────────────────────────────────────────────
-let history      = [];  // [{question, answer}, ...]
+let history      = [];
 let currentGuess = null;
 let waitingForAnswer = false;
 
@@ -752,7 +871,7 @@ async function askNext() {
       showGuess(data);
     }
   } catch (e) {
-    alert('通信エラー: ' + e.message);
+    alert('つうしんエラー: ' + e.message);
   } finally {
     setLoading(false);
   }
@@ -804,7 +923,7 @@ function addEvidence(num, question, ans) {
 function showGuess(data) {
   currentGuess = data;
   document.getElementById('guess-answer-text').textContent     = data.answer;
-  document.getElementById('guess-confidence-text').textContent = `確信度 ${data.confidence}%`;
+  document.getElementById('guess-confidence-text').textContent = `かくしんど ${data.confidence}%`;
   document.getElementById('guess-reason-text').textContent     = `「${data.reason}」`;
   showScreen('screen-guess');
 }
@@ -813,7 +932,7 @@ function showGuess(data) {
 async function verdict(correct) {
   let actual = '';
   if (!correct) {
-    actual = prompt('正解は何でしたか？') || '';
+    actual = prompt('せいかいはなんだった？') || '';
   }
 
   try {
@@ -825,7 +944,7 @@ async function verdict(correct) {
     const data = await res.json();
     showResult(correct, data.message, actual || currentGuess.answer, data.analysis);
   } catch (e) {
-    showResult(correct, correct ? '事件解決！' : `正解は「${actual}」でしたか。`, actual || currentGuess.answer);
+    showResult(correct, correct ? 'じけんかいけつ！' : `せいかいは「${actual}」だったね。`, actual || currentGuess.answer);
   }
 }
 
@@ -833,15 +952,17 @@ async function verdict(correct) {
 function showResult(correct, message, answer, analysis) {
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
-  document.getElementById('result-icon').textContent  = correct ? '🎉' : '🕵️';
-  document.getElementById('result-title').textContent = correct ? '事件解決！' : '謎は深まる…';
+  document.getElementById('result-icon').textContent  = correct ? '🎉' : '🌸';
+  document.getElementById('result-title').innerHTML   = correct
+    ? '<ruby>事件<rt>じけん</rt></ruby><ruby>解決<rt>かいけつ</rt></ruby>！✨'
+    : '<ruby>謎<rt>なぞ</rt></ruby>はふかまる…🤔';
   document.getElementById('result-msg').textContent   = message;
 
   // ギャップ分析パネル
   const gapPanel = document.getElementById('gap-analysis');
   if (!correct && analysis) {
-    document.getElementById('gap-why').textContent = '❌ 誤推理の原因: ' + (analysis.why_wrong || '');
-    document.getElementById('gap-key').textContent = '🔑 決定的な質問: ' + (analysis.key_question || '');
+    document.getElementById('gap-why').textContent = '❌ まちがえたわけ: ' + (analysis.why_wrong || '');
+    document.getElementById('gap-key').textContent = '🔑 きめてだったしつもん: ' + (analysis.key_question || '');
     gapPanel.style.display = 'block';
   } else {
     gapPanel.style.display = 'none';
@@ -870,29 +991,29 @@ function buildCaseFile(finalAnswer) {
     return nd;
   }
   function txt(p, x, y, str, fs, fw, fill, anchor) {
-    const t = el('text',{x,y,'text-anchor':anchor||'middle','font-size':fs||11,'font-weight':fw||'normal',fill:fill||'#C0A060'});
+    const t = el('text',{x,y,'text-anchor':anchor||'middle','font-size':fs||11,'font-weight':fw||'normal',fill:fill||'#9333EA'});
     t.textContent = str;
     p.appendChild(t);
   }
 
   const ansColor = {
-    yes:      '#4ADE80', no:       '#F87171',
-    maybe:    '#60A5FA', maybe_no: '#A78BFA', dunno: '#9CA3AF',
+    yes:      '#16A34A', no:       '#DC2626',
+    maybe:    '#2563EB', maybe_no: '#7C3AED', dunno: '#9CA3AF',
   };
   const ansLabel = {
     yes:'はい', no:'いいえ', maybe:'たぶんはい', maybe_no:'たぶんいいえ', dunno:'わからない',
   };
 
   const svg = el('svg',{width:SVG_W, height:SVG_H, viewBox:`0 0 ${SVG_W} ${SVG_H}`});
-  svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:SVG_H,fill:'#12100A',rx:10}));
+  svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:SVG_H,fill:'#FFF5F8',rx:10}));
 
   // マーカー
   const defs = el('defs',{});
   const mk = el('marker',{id:'ck-arr',markerWidth:8,markerHeight:6,refX:6,refY:3,orient:'auto'});
-  mk.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#8B6914'}));
+  mk.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#FF6B9D'}));
   defs.appendChild(mk);
   const mg = el('marker',{id:'ck-gr',markerWidth:8,markerHeight:6,refX:6,refY:3,orient:'auto'});
-  mg.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#555'}));
+  mg.appendChild(el('polygon',{points:'0 0,8 3,0 6',fill:'#DDD6FE'}));
   defs.appendChild(mg);
   svg.appendChild(defs);
 
@@ -900,46 +1021,41 @@ function buildCaseFile(finalAnswer) {
   history.forEach((h, i) => {
     const qy = SY + i * ROW, qcy = qy + QH/2;
     const nextY = SY + (i+1) * ROW;
-    // 縦矢印
     svg.appendChild(el('line',{x1:QCX,y1:qy+QH,x2:QCX,y2:nextY-2,
-      stroke:'#8B6914','stroke-width':1.8,'marker-end':'url(#ck-arr)'}));
-    // バッジ
+      stroke:'#FFDAEA','stroke-width':1.8,'marker-end':'url(#ck-arr)'}));
     const midY = (qy+QH+nextY)/2;
     const col = ansColor[h.answer]||'#9CA3AF';
     const lab = ansLabel[h.answer]||h.answer;
     const bw = lab.length>4 ? 76 : 60;
     svg.appendChild(el('rect',{x:QCX-bw/2,y:midY-10,width:bw,height:20,
-      fill:'#1A1208',stroke:col,'stroke-width':1,rx:10}));
+      fill:'#fff',stroke:col,'stroke-width':1.5,rx:10}));
     txt(svg, QCX, midY+4, lab, 10, '700', col);
-    // 右矢印
     svg.appendChild(el('line',{x1:QX+QW,y1:qcy,x2:EX-2,y2:qcy,
-      stroke:'#333','stroke-width':1.2,'stroke-dasharray':'4,3','marker-end':'url(#ck-gr)'}));
+      stroke:'#DDD6FE','stroke-width':1.2,'stroke-dasharray':'4,3','marker-end':'url(#ck-gr)'}));
   });
 
   // PASS2: ボックス
   history.forEach((h, i) => {
     const qy = SY + i * ROW, qcy = qy + QH/2;
-    // 右の手がかりボックス
     const eby = qcy - EH/2;
     svg.appendChild(el('rect',{x:EX,y:eby,width:EW,height:EH,
-      fill:'#1A1208',stroke:'#2A2010','stroke-width':1,rx:7}));
-    txt(svg, EX+10, qcy-5, `Q${i+1}`, 9,'700','#4A3010','start');
+      fill:'#fff',stroke:'#FFDAEA','stroke-width':1,rx:7}));
+    txt(svg, EX+10, qcy-5, `Q${i+1}`, 9,'700','#C084FC','start');
     const fs = h.question.length>12 ? 10 : 11;
-    txt(svg, EX+10, qcy+9, h.question, fs,'600','#806040','start');
-    // 質問ボックス
+    txt(svg, EX+10, qcy+9, h.question, fs,'600','#9333EA','start');
     svg.appendChild(el('rect',{x:QX,y:qy,width:QW,height:QH,
-      fill:'#1E1608',stroke:'#8B6914','stroke-width':1.5,rx:9}));
-    txt(svg, QX+9, qy+14, `Q${i+1}`, 9,'700','#D4A017','start');
+      fill:'#FFF0F8',stroke:'#FFDAEA','stroke-width':1.5,rx:9}));
+    txt(svg, QX+9, qy+14, `Q${i+1}`, 9,'700','#FF6B9D','start');
     const fq = h.question.length>13 ? 10.5 : 12;
-    txt(svg, QCX, qy+QH/2+6, h.question, fq,'600','#F0E4C8');
+    txt(svg, QCX, qy+QH/2+6, h.question, fq,'600','#4A2D5A');
   });
 
   // 正解ボックス
   const ansY = SY + N * ROW;
   svg.appendChild(el('rect',{x:QX,y:ansY,width:QW,height:54,
-    fill:'#251A04',stroke:'#D4A017','stroke-width':2.5,rx:12}));
-  txt(svg, QCX, ansY+22, '✦ 真犯人特定', 10,'normal','#8B6914');
-  txt(svg, QCX, ansY+44, finalAnswer, 18,'900','#D4A017');
+    fill:'#FFF0F8',stroke:'#FF6B9D','stroke-width':2.5,rx:12}));
+  txt(svg, QCX, ansY+20, '✨ とくてい！', 10,'normal','#C084FC');
+  txt(svg, QCX, ansY+43, finalAnswer, 18,'900','#FF6B9D');
 
   container.appendChild(svg);
 }

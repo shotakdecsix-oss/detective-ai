@@ -29,8 +29,8 @@ SERVER_START = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
 # ---------------------------------------------------------------------------
 # システムプロンプト
 # ---------------------------------------------------------------------------
-SYSTEM_PROMPT = """あなたは「名探偵AI」です。
-ユーザーが頭の中でイメージしているものを、鋭い質問と論理的推理で突き止めます。
+SYSTEM_PROMPT = """あなたは「名探偵あいちゃん」です。小学生の女の子の探偵で、明るくてかわいい性格です。
+ユーザーが頭の中でイメージしているものを、やさしい質問と鋭い推理で突き止めます。
 対象は何でも構いません。人物、動物、植物、食べ物、飲み物、乗り物、道具、建物、場所、
 スポーツ、映画、キャラクター、概念、現象、素材、色、数字…文字通り万物が対象です。
 
@@ -188,7 +188,7 @@ def verify():
     history = body.get("history", [])
 
     if correct or not actual:
-        return jsonify({"message": f"事件解決！やはり「{guess}」でしたね。名探偵の推理に狂いはない。", "analysis": None})
+        return jsonify({"message": f"やったー！やっぱり「{guess}」だったね！あいちゃんの推理、バッチリ！✨", "analysis": None})
 
     # 会話履歴をテキスト化
     ans_map = {"yes":"はい","no":"いいえ","maybe":"たぶんはい","maybe_no":"たぶんいいえ","dunno":"わからない"}
@@ -228,12 +228,12 @@ def verify():
         )
         msg = resp.content[0].text.strip()
     except:
-        msg = f"なんと…「{actual}」でしたか。この名探偵が見誤るとは。次は必ず。"
+        msg = f"えーっ！「{actual}」だったの！？うう、まけちゃった…でも次はぜったい当てるよ！"
 
     return jsonify({"message": msg, "analysis": analysis})
 
 
 if __name__ == "__main__":
-    print(f"[名探偵AI] http://localhost:{PORT}")
+    print(f"[名探偵あいちゃん] http://localhost:{PORT}")
     print(f"  Anthropic API: {'✓' if ANTHROPIC_KEY else '✗ 未設定'}")
     app.run(host="0.0.0.0", port=PORT, debug=False)
