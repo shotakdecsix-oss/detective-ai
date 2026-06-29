@@ -4,12 +4,13 @@ Claude が何でも推理する探偵ゲーム
 Config: akinator_config.json
 """
 
-import json, os, re, anthropic
+import json, os, re, uuid, anthropic
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
-BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, "akinator_config.json")
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH   = os.path.join(BASE_DIR, "akinator_config.json")
+FAILURES_PATH = os.path.join(BASE_DIR, "failures.json")
 
 CFG = {}
 if os.path.exists(CONFIG_PATH):
@@ -298,7 +299,98 @@ def verify():
     except:
         msg = f"えーっ！「{actual}」だったの！？うう、まけちゃった…でも次はぜったい当てるよ！"
 
+    # 失敗ケースを failures.json に記録
+    try:
+        record = {
+            "id":        str(uuid.uuid4())[:8],
+            "timestamp": datetime.now(JST).isoformat(),
+            "actual":    actual,
+            "guessed":   guess,
+            "turns":     len(history),
+            "mode":      "phase" if USE_PHASE_MODE else "original",
+            "history":   history,
+            "gap":       analysis,
+        }
+        failures = []
+        if os.path.exists(FAILURES_PATH):
+            with open(FAILURES_PATH, "r", encoding="utf-8") as f:
+                failures = json.load(f)
+        failures.append(record)
+        with open(FAILURES_PATH, "w", encoding="utf-8") as f:
+            json.dump(failures, f, ensure_ascii=False, indent=2)
+        print(f"[FAILURE] 記録: {actual} (推理:{guess}) ID={record['id']}")
+    except Exception as e:
+        print(f"[WARN] 失敗記録に失敗: {e}")
+
     return jsonify({"message": msg, "analysis": analysis})
+
+
+# ---------------------------------------------------------------------------
+# 管理者エンドポイント
+# ---------------------------------------------------------------------------
+@app.route("/admin")
+def admin():
+    return send_from_directory(BASE_DIR, "admin.html")
+
+@app.route("/api/failures")
+def get_failures():
+    if not os.path.exists(FAILURES_PATH):
+        return jsonify([])
+    with open(FAILURES_PATH, "r", encoding="utf-8") as f:
+        return jsonify(json.load(f))
+
+@app.route("/api/analyze-failures", methods=["POST"])
+def analyze_failures():
+    if not os.path.exists(FAILURES_PATH):
+        return jsonify({"error": "失敗データなし"})
+    with open(FAILURES_PATH, "r", encoding="utf-8") as f:
+        failures = json.load(f)
+    if not failures:
+        return jsonify({"error": "失敗データなし"})
+
+    # 最新20件で分析
+    recent = failures[-20:]
+    summary_parts = []
+    for i, fl in enumerate(recent):
+        qa = "\n".join(
+            f"  Q{j+1}: {h['question']} → {h['answer']}"
+            for j, h in enumerate(fl["history"])
+        )
+        gap_text = ""
+        if fl.get("gap"):
+            gap_text = f"\n  誤推理理由: {fl['gap'].get('why_wrong','')}\n  決定的質問: {fl['gap'].get('key_question','')}"
+        summary_parts.append(
+            f"【失敗{i+1}】正解=「{fl['actual']}」推理=「{fl['guessed']}」{fl['turns']}問\n{qa}{gap_text}"
+        )
+    summary = "\n\n".join(summary_parts)
+
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=1500,
+            messages=[{"role": "user", "content":
+                f"名探偵推理ゲーム（Akinator形式・はい/いいえ20問）の失敗事例{len(recent)}件です。\n\n"
+                f"現在のフェーズ1固定質問（第1〜12問）:\n"
+                f"1.生き物か 2.人工物か 3.日本でよく見るか 4.食べ物か 5.屋内か "
+                f"6.小学生が知ってるか 7.触れるか 8.動くか 9.1000円以下か "
+                f"10.メディアに出るか 11.一人用か 12.10年後も存在するか\n\n"
+                f"失敗事例:\n{summary}\n\n"
+                f"以下を分析してください:\n"
+                f"1. 失敗しやすいアイテムの共通パターン（カテゴリ・特性）\n"
+                f"2. フェーズ1の固定質問で不足している識別軸（追加すべき質問候補）\n"
+                f"3. フェーズ2で使うべき絞り込み質問の戦略\n"
+                f"4. システムプロンプトへの具体的改善案（コピペで使える形）\n\n"
+                f"日本語で分析してください。"
+            }]
+        )
+        return jsonify({"analysis": resp.content[0].text, "count": len(recent)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/failures/clear", methods=["POST"])
+def clear_failures():
+    if os.path.exists(FAILURES_PATH):
+        os.remove(FAILURES_PATH)
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":
