@@ -4,7 +4,7 @@ Claude が何でも推理する探偵ゲーム
 Config: akinator_config.json
 """
 
-import json, os, re, anthropic
+import json, os, re, uuid, anthropic
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
@@ -22,6 +22,9 @@ PORT          = int(CFG.get("port", 5052))
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 app    = Flask(__name__, static_folder=BASE_DIR)
+
+# 逆モード用セッションストア（メモリ内）
+reverse_sessions: dict = {}
 
 JST = timezone(timedelta(hours=9))
 SERVER_START = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
@@ -232,6 +235,112 @@ def verify():
 
     record_failure(guess, actual, history, analysis)
     return jsonify({"message": msg, "analysis": analysis})
+
+
+# ---------------------------------------------------------------------------
+# 逆モード（モードB）エンドポイント
+# ---------------------------------------------------------------------------
+
+@app.route("/api/reverse/start", methods=["POST"])
+def reverse_start():
+    """あいちゃんがお題を決めてセッションに保存する"""
+    session_id = str(uuid.uuid4())
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=120,
+            messages=[{"role": "user", "content":
+                "逆アキネーターを始めます。頭の中でものを1つ決めてください。"
+                "日本語で有名なもの（食べ物・動物・キャラクター・乗り物・場所など）を1つ選んでください。"
+                "難しすぎず簡単すぎないものにしてね。決まったら教えてください。\n"
+                "出力形式: {\"topic\": \"決めたもの\", \"category\": \"カテゴリ（10字以内）\"}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"topic": "りんご", "category": "食べ物"}
+
+        reverse_sessions[session_id] = {
+            "topic":      data.get("topic", "りんご"),
+            "category":   data.get("category", ""),
+            "qa_history": [],
+        }
+        return jsonify({"session_id": session_id, "message": "よし！決めたよ！なんでも質問してみて！"})
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/reverse/question", methods=["POST"])
+def reverse_question():
+    """ユーザーの質問にあいちゃんが はい/いいえ/たぶん/わからない で答える"""
+    body       = request.get_json(force=True)
+    session_id = body.get("session_id", "")
+    question   = body.get("question", "")
+
+    session = reverse_sessions.get(session_id)
+    if not session:
+        return jsonify({"error": "セッションが見つかりません"}), 404
+
+    topic = session["topic"]
+    history_text = "\n".join(
+        f"Q: {qa['question']} → {qa['answer']}" for qa in session["qa_history"]
+    ) or "（まだ質問なし）"
+
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=120,
+            messages=[{"role": "user", "content":
+                f"あなたが決めたお題は「{topic}」です。\n"
+                f"これまでのQ&A:\n{history_text}\n\n"
+                f"ユーザーの質問:「{question}」\n"
+                f"このお題に対して正直に「はい」「いいえ」「たぶん」「わからない」のどれかで答えて、"
+                f"あいちゃんらしい一言コメントを添えてください（お題は絶対に言わないこと）。\n"
+                f"出力形式: {{\"answer\": \"はい\", \"comment\": \"コメント（20字以内）\"}}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"answer": "わからない", "comment": "うーん！"}
+
+        session["qa_history"].append({"question": question, "answer": data["answer"]})
+        return jsonify({"answer": data.get("answer", "わからない"), "comment": data.get("comment", "")})
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/reverse/guess", methods=["POST"])
+def reverse_guess():
+    """ユーザーの回答が正解かあいちゃんが判定する"""
+    body       = request.get_json(force=True)
+    session_id = body.get("session_id", "")
+    user_guess = body.get("guess", "")
+
+    session = reverse_sessions.get(session_id)
+    if not session:
+        return jsonify({"error": "セッションが見つかりません"}), 404
+
+    topic = session["topic"]
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=150,
+            messages=[{"role": "user", "content":
+                f"あなたが決めたお題は「{topic}」です。\n"
+                f"ユーザーの回答:「{user_guess}」\n"
+                f"完全一致でなくても、実質的に同じものを指していれば正解です。\n"
+                f"正解かどうか判定して、あいちゃんらしいセリフで答えてください。\n"
+                f"出力形式: {{\"correct\": true, \"topic\": \"{topic}\", \"message\": \"セリフ（40字以内）\"}}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {
+            "correct": False, "topic": topic,
+            "message": f"ちがうよ！正解は「{topic}」だよ！"
+        }
+        # セッション削除
+        reverse_sessions.pop(session_id, None)
+        return jsonify(data)
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
 
 
 if __name__ == "__main__":

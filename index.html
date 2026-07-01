@@ -426,6 +426,186 @@ h1 ruby rt { font-size: 9px; letter-spacing: .04em; }
 /* ruby タグ共通 */
 ruby { ruby-align: center; }
 rt { font-size: 9px; color: #C084FC; }
+
+/* ── モード選択 ─────────────────────────────────────────── */
+.mode-buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.btn-mode {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 2px solid;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: .04em;
+  text-align: left;
+  display: block;
+}
+.btn-mode:hover { transform: translateX(4px) scale(1.01); }
+.btn-mode-a {
+  background: linear-gradient(135deg, rgba(255,107,157,.1), rgba(192,132,252,.08));
+  border-color: #FF6B9D; color: #7C3AED;
+}
+.btn-mode-b {
+  background: linear-gradient(135deg, rgba(192,132,252,.1), rgba(147,51,234,.08));
+  border-color: #C084FC; color: #9333EA;
+}
+.mode-label {
+  display: block;
+  font-size: 11px;
+  color: #C084FC;
+  font-weight: 400;
+  margin-top: 3px;
+  letter-spacing: .02em;
+}
+
+/* ── 逆モード：共通 ──────────────────────────────────────── */
+.reverse-status {
+  font-size: 13px;
+  color: #7C3AED;
+  text-align: center;
+  margin: 4px 0 10px;
+  line-height: 1.7;
+  font-weight: 700;
+}
+
+/* 回答バブル */
+.reverse-answer-bubble {
+  width: 100%;
+  background: rgba(255,255,255,.92);
+  border: 2px solid #C084FC;
+  border-radius: 16px;
+  padding: 14px 18px;
+  text-align: center;
+  margin-bottom: 12px;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(192,132,252,.15);
+}
+.reverse-answer-bubble::before {
+  content: '';
+  position: absolute;
+  top: -10px; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: #C084FC;
+}
+.reverse-bubble-main {
+  font-size: 28px;
+  font-weight: 900;
+  margin-bottom: 4px;
+  letter-spacing: .06em;
+}
+.reverse-bubble-main.ans-yes  { color: #16A34A; }
+.reverse-bubble-main.ans-no   { color: #DC2626; }
+.reverse-bubble-main.ans-maybe{ color: #2563EB; }
+.reverse-bubble-main.ans-dunno{ color: #9CA3AF; }
+.reverse-bubble-comment {
+  font-size: 12px;
+  color: #9333EA;
+  font-style: italic;
+}
+
+/* 質問入力 */
+.reverse-input-area {
+  display: flex; gap: 8px;
+  width: 100%; margin-bottom: 10px;
+}
+.reverse-input-area input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #4A2D5A;
+  background: rgba(255,255,255,.9);
+  outline: none;
+  transition: border-color .15s;
+}
+.reverse-input-area input:focus { border-color: #C084FC; }
+.btn-reverse-submit {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
+  color: #fff; border: none;
+  font-size: 13px; font-family: inherit; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: all .2s;
+  box-shadow: 0 2px 10px rgba(255,107,157,.35);
+}
+.btn-reverse-submit:hover { transform: scale(1.05); }
+.btn-reverse-submit:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* 正解入力エリア */
+.reverse-guess-area {
+  width: 100%;
+  background: rgba(255,255,255,.88);
+  border: 2px solid #FF6B9D;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-top: 4px;
+  box-shadow: 0 2px 12px rgba(255,107,157,.12);
+}
+.reverse-guess-label {
+  font-size: 13px; font-weight: 700;
+  color: #FF6B9D;
+  margin-bottom: 10px;
+  text-align: center;
+  letter-spacing: .04em;
+}
+.reverse-guess-row { display: flex; gap: 8px; }
+.reverse-guess-row input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #4A2D5A;
+  background: rgba(255,255,255,.9);
+  outline: none;
+  transition: border-color .15s;
+}
+.reverse-guess-row input:focus { border-color: #FF6B9D; }
+.btn-reverse-guess {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FF6B9D, #9333EA);
+  color: #fff; border: none;
+  font-size: 13px; font-family: inherit; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: all .2s;
+  box-shadow: 0 2px 10px rgba(255,107,157,.35);
+}
+.btn-reverse-guess:hover { transform: scale(1.05); }
+.btn-reverse-guess:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* 逆モード結果：お題公開ボックス */
+.topic-reveal {
+  width: 100%;
+  background: rgba(255,255,255,.88);
+  border: 1.5px solid #FFDAEA;
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(255,107,157,.1);
+}
+.topic-reveal-label {
+  font-size: 11px; letter-spacing: .15em;
+  color: #C084FC; margin-bottom: 8px; font-weight: 700;
+}
+.topic-reveal-answer {
+  font-size: 32px; font-weight: 900;
+  background: linear-gradient(135deg, #FF6B9D, #9333EA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: .08em;
+  animation: revealPulse 1s ease-out;
+}
 </style>
 </head>
 <body>
@@ -561,7 +741,16 @@ rt { font-size: 9px; color: #C084FC; }
         <ruby>人<rt>ひと</rt></ruby>・<ruby>動物<rt>どうぶつ</rt></ruby>・ものなど、なんでもいいよ。<br>
         あいちゃんが<ruby>必<rt>かなら</rt></ruby>ず<ruby>当<rt>あ</rt></ruby>ててみせる！
       </p>
-      <button class="btn-start" onclick="startGame()">🔍 <ruby>捜査<rt>そうさ</rt></ruby>かいし！</button>
+      <div class="mode-buttons">
+        <button class="btn-mode btn-mode-a" onclick="startGame()">
+          🔍 あいちゃんが当てる
+          <span class="mode-label">なにかを思い浮かべて、あいちゃんに当ててもらおう！</span>
+        </button>
+        <button class="btn-mode btn-mode-b" onclick="startReverseGame()">
+          🎯 ユーザーが当てる
+          <span class="mode-label">あいちゃんがものを決めるよ。質問して当ててね！</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -795,6 +984,148 @@ rt { font-size: 9px; color: #C084FC; }
     </div>
 
     <button class="btn-restart" onclick="resetGame()">🔍 あたらしい<ruby>事件<rt>じけん</rt></ruby>へ</button>
+  </div>
+
+  <!-- ══ 逆モード：ゲーム画面 ════════════════════════════ -->
+  <div id="screen-reverse" class="screen">
+    <header>
+      <div class="badge">🎯</div>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
+      <p class="subtitle">あいちゃんのひみつを当ててみて！</p>
+    </header>
+
+    <div class="detective-wrap thinking-anim">
+      <svg viewBox="0 0 220 310" width="120" height="170">
+        <defs>
+          <radialGradient id="glow-pink-rv" cx="50%" cy="100%" r="60%">
+            <stop offset="0%" stop-color="#FF6B9D" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#FF6B9D" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="110" cy="296" rx="72" ry="14" fill="url(#glow-pink-rv)"/>
+        <path d="M62 228 Q50 278 54 295 L166 295 Q170 278 158 228Z" fill="#C084FC"/>
+        <path d="M54 290 Q70 283 86 290 Q102 297 118 290 Q134 283 150 290 Q162 297 168 290" fill="none" stroke="#E9D5FF" stroke-width="3" stroke-linecap="round"/>
+        <path d="M65 150 Q45 220 62 228 L158 228 Q175 220 155 150 Q135 165 110 165 Q85 165 65 150Z" fill="#FF8FAB"/>
+        <path d="M92 150 L110 178 L128 150" fill="#FF6B9D"/>
+        <line x1="110" y1="178" x2="110" y2="228" stroke="#FF6B9D" stroke-width="2.5"/>
+        <circle cx="110" cy="196" r="5" fill="#9333EA"/>
+        <circle cx="110" cy="216" r="5" fill="#9333EA"/>
+        <path d="M67 157 Q40 200 32 238" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="243" rx="13" ry="10" fill="#FFCAB0" transform="rotate(-20,28,243)"/>
+        <path d="M153 157 Q180 196 187 222" stroke="#FF8FAB" stroke-width="24" fill="none" stroke-linecap="round"/>
+        <g class="magnifier">
+          <circle cx="194" cy="230" r="22" fill="none" stroke="#A855F7" stroke-width="5"/>
+          <circle cx="194" cy="230" r="17" fill="rgba(168,85,247,0.1)"/>
+          <ellipse cx="187" cy="222" rx="6" ry="4" fill="#E9D5FF" opacity="0.65" transform="rotate(-30,187,222)"/>
+          <circle cx="196" cy="224" r="2" fill="#fff" opacity="0.8"/>
+          <line x1="209" y1="246" x2="220" y2="257" stroke="#7E22CE" stroke-width="7" stroke-linecap="round"/>
+        </g>
+        <rect x="97" y="124" width="26" height="28" rx="10" fill="#FFCAB0"/>
+        <ellipse cx="110" cy="82" rx="42" ry="46" fill="#6D28D9"/>
+        <path d="M68 108 Q42 138 36 174 Q32 210 44 236 Q54 240 60 226 Q50 200 58 168 Q68 140 76 116Z" fill="#7C3AED"/>
+        <path d="M152 108 Q178 138 184 174 Q188 210 176 236 Q166 240 160 226 Q170 200 162 168 Q152 140 144 116Z" fill="#7C3AED"/>
+        <ellipse cx="110" cy="104" rx="36" ry="33" fill="#FFCAB0"/>
+        <ellipse cx="88" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="132" cy="116" rx="11" ry="7" fill="#FFB5C8" opacity="0.55"/>
+        <ellipse cx="96" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="124" cy="100" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="96" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="124" cy="102" rx="8" ry="9" fill="#7C3AED"/>
+        <ellipse cx="96" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <ellipse cx="124" cy="103" rx="4.5" ry="5" fill="#2E1065"/>
+        <circle cx="99" cy="96" r="3.5" fill="#fff"/>
+        <circle cx="127" cy="96" r="3.5" fill="#fff"/>
+        <line x1="84" y1="90" x2="87" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="91" y1="88" x2="91" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="99" y1="88" x2="101" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="113" y1="88" x2="115" y2="84" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="120" y1="88" x2="120" y2="83" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <line x1="127" y1="88" x2="129" y2="86" stroke="#4A2D5A" stroke-width="2" stroke-linecap="round"/>
+        <path d="M84 96 Q96 88 108 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M112 96 Q124 88 136 96" stroke="#4A2D5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M86 86 Q96 80 106 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M114 86 Q124 80 134 86" stroke="#6D28D9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="110" cy="113" r="2.5" fill="#FFAA9A" opacity="0.7"/>
+        <!-- にやにや笑い（秘密を知ってる） -->
+        <path d="M100 122 Q110 128 120 122" stroke="#FF6B9D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="70" rx="38" ry="27" fill="#7C3AED"/>
+        <path d="M72 88 Q68 70 80 64 Q90 68 94 76" fill="#7C3AED"/>
+        <path d="M148 88 Q152 70 140 64 Q130 68 126 76" fill="#7C3AED"/>
+        <path d="M88 80 Q96 62 110 58 Q124 62 132 80" fill="#6D28D9"/>
+        <path d="M58 112 Q67 106 72 112 Q67 118 58 112Z" fill="#FF6B9D"/>
+        <path d="M72 112 Q81 106 88 112 Q81 118 72 112Z" fill="#FF6B9D"/>
+        <circle cx="72" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="72" cy="112" r="2.5" fill="#FF6B9D"/>
+        <path d="M162 112 Q153 106 148 112 Q153 118 162 112Z" fill="#FF6B9D"/>
+        <path d="M148 112 Q139 106 132 112 Q139 118 148 112Z" fill="#FF6B9D"/>
+        <circle cx="148" cy="112" r="5" fill="#FFB5C8"/>
+        <circle cx="148" cy="112" r="2.5" fill="#FF6B9D"/>
+        <ellipse cx="112" cy="55" rx="33" ry="19" fill="#6D28D9" transform="rotate(-12 112 55)"/>
+        <ellipse cx="112" cy="50" rx="26" ry="16" fill="#7C3AED" transform="rotate(-12 112 50)"/>
+        <path d="M79 62 Q112 68 145 58" stroke="#4C1D95" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="122" cy="39" r="7" fill="#C084FC"/>
+        <circle cx="122" cy="39" r="4" fill="#DDD6FE"/>
+        <text x="104" y="60" font-size="13" text-anchor="middle">⭐</text>
+      </svg>
+    </div>
+
+    <div class="turn-display">だい <span id="reverse-turn-num">0</span> もん</div>
+
+    <div class="reverse-status" id="reverse-status">お題を考えてるよ…🤔</div>
+
+    <!-- あいちゃんの回答バブル（最初は非表示） -->
+    <div class="reverse-answer-bubble hidden" id="reverse-bubble-wrap">
+      <div class="reverse-bubble-main" id="reverse-bubble-answer"></div>
+      <div class="reverse-bubble-comment" id="reverse-bubble-comment"></div>
+    </div>
+
+    <!-- QA履歴 -->
+    <div class="evidence-panel" style="margin-bottom:12px">
+      <div class="evidence-title">📋 質問と回答の記録</div>
+      <div id="reverse-qa-list"></div>
+    </div>
+
+    <!-- 質問入力エリア -->
+    <div class="reverse-input-area">
+      <input type="text" id="reverse-question-input"
+             placeholder="はい/いいえで答えられる質問を入力…"
+             onkeydown="if(event.key==='Enter')submitReverseQuestion()">
+      <button class="btn-reverse-submit" id="reverse-submit-btn"
+              onclick="submitReverseQuestion()">質問する</button>
+    </div>
+
+    <!-- 正解入力エリア（1問目以降に表示） -->
+    <div class="reverse-guess-area hidden" id="reverse-guess-area">
+      <div class="reverse-guess-label">🎯 わかった？正解を入力してね！</div>
+      <div class="reverse-guess-row">
+        <input type="text" id="reverse-guess-input"
+               placeholder="正解は…"
+               onkeydown="if(event.key==='Enter')submitReverseGuess()">
+        <button class="btn-reverse-guess" id="reverse-guess-btn"
+                onclick="submitReverseGuess()">回答する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 逆モード：結果画面 ════════════════════════════════ -->
+  <div id="screen-reverse-result" class="screen">
+    <header>
+      <div class="badge">🎯</div>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
+    </header>
+
+    <div class="result-banner" id="reverse-result-banner">
+      <div class="result-icon"  id="reverse-result-icon"></div>
+      <div class="result-title" id="reverse-result-title"></div>
+      <div class="result-msg"   id="reverse-result-msg"></div>
+    </div>
+
+    <div class="topic-reveal">
+      <div class="topic-reveal-label">🔮 あいちゃんのひみつのお題</div>
+      <div class="topic-reveal-answer" id="reverse-result-topic"></div>
+    </div>
+
+    <button class="btn-restart" onclick="resetToStart()">🔍 もういちどあそぶ</button>
   </div>
 
 </div><!-- /#app -->
@@ -1060,12 +1391,157 @@ function buildCaseFile(finalAnswer) {
   container.appendChild(svg);
 }
 
-// ── リセット ─────────────────────────────────────────────────────
+// ── リセット（モードA） ───────────────────────────────────────────
 function resetGame() {
   history = [];
   currentGuess = null;
   document.getElementById('evidence-list').innerHTML = '';
   showScreen('screen-start');
+}
+
+// ── トップへ戻る（両モード共通） ──────────────────────────────────
+function resetToStart() {
+  history = [];
+  currentGuess = null;
+  reverseSessionId = null;
+  reverseHistory   = [];
+  document.getElementById('evidence-list').innerHTML   = '';
+  document.getElementById('reverse-qa-list').innerHTML = '';
+  showScreen('screen-start');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 逆モード（モードB）
+// ═══════════════════════════════════════════════════════════════════
+let reverseSessionId = null;
+let reverseHistory   = [];
+let reverseWaiting   = false;
+
+async function startReverseGame() {
+  reverseSessionId = null;
+  reverseHistory   = [];
+  reverseWaiting   = false;
+
+  document.getElementById('reverse-qa-list').innerHTML    = '';
+  document.getElementById('reverse-turn-num').textContent = '0';
+  document.getElementById('reverse-status').textContent   = 'お題を考えてるよ…🤔';
+  document.getElementById('reverse-bubble-wrap').classList.add('hidden');
+  document.getElementById('reverse-guess-area').classList.add('hidden');
+  document.getElementById('reverse-question-input').value = '';
+  document.getElementById('reverse-guess-input').value    = '';
+
+  showScreen('screen-reverse');
+  setReverseLoading(true);
+
+  try {
+    const res  = await fetch('/api/reverse/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); return; }
+    reverseSessionId = data.session_id;
+    document.getElementById('reverse-status').textContent = data.message || 'よし！決めたよ！質問してね！';
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+  } finally {
+    setReverseLoading(false);
+  }
+}
+
+function setReverseLoading(on) {
+  reverseWaiting = on;
+  document.getElementById('reverse-submit-btn').disabled    = on;
+  document.getElementById('reverse-guess-btn').disabled     = on;
+  document.getElementById('reverse-question-input').disabled = on;
+}
+
+async function submitReverseQuestion() {
+  const input    = document.getElementById('reverse-question-input');
+  const question = input.value.trim();
+  if (!question || reverseWaiting || !reverseSessionId) return;
+  input.value = '';
+  setReverseLoading(true);
+  try {
+    const res  = await fetch('/api/reverse/question', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId, question }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); return; }
+    reverseHistory.push({ question, answer: data.answer });
+    addReverseQA(reverseHistory.length, question, data.answer, data.comment);
+    flash();
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+  } finally {
+    setReverseLoading(false);
+  }
+}
+
+function addReverseQA(num, question, answer, comment) {
+  const ansMap = {
+    'はい':       ['yes',   'ans-yes'],
+    'いいえ':     ['no',    'ans-no'],
+    'たぶん':     ['maybe', 'ans-maybe'],
+    'わからない': ['dunno', 'ans-dunno'],
+  };
+  const [evCls, bubbleCls] = ansMap[answer] || ['dunno', 'ans-dunno'];
+
+  const el = document.createElement('div');
+  el.className = 'evidence-item';
+  el.innerHTML = `
+    <span class="ev-q">Q${num}</span>
+    <span class="ev-text">${question}</span>
+    <span class="ev-ans ${evCls}">${answer}</span>
+  `;
+  const list = document.getElementById('reverse-qa-list');
+  list.appendChild(el);
+  list.scrollTop = list.scrollHeight;
+
+  const bubbleEl = document.getElementById('reverse-bubble-answer');
+  bubbleEl.textContent = answer;
+  bubbleEl.className   = 'reverse-bubble-main ' + bubbleCls;
+  document.getElementById('reverse-bubble-comment').textContent = comment || '';
+  document.getElementById('reverse-bubble-wrap').classList.remove('hidden');
+  document.getElementById('reverse-turn-num').textContent = num;
+  document.getElementById('reverse-guess-area').classList.remove('hidden');
+}
+
+async function submitReverseGuess() {
+  const input = document.getElementById('reverse-guess-input');
+  const guess = input.value.trim();
+  if (!guess || reverseWaiting || !reverseSessionId) return;
+  setReverseLoading(true);
+  try {
+    const res  = await fetch('/api/reverse/guess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId, guess }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); return; }
+    flash();
+    showReverseResult(data.correct, data.topic, data.message);
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+  } finally {
+    setReverseLoading(false);
+  }
+}
+
+function showReverseResult(correct, topic, message) {
+  const banner = document.getElementById('reverse-result-banner');
+  banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
+  document.getElementById('reverse-result-icon').textContent  = correct ? '🎉' : '🌸';
+  document.getElementById('reverse-result-title').innerHTML   = correct
+    ? '<ruby>正解<rt>せいかい</rt></ruby>！✨'
+    : '<ruby>残念<rt>ざんねん</rt></ruby>…🤔';
+  document.getElementById('reverse-result-msg').textContent   = message || '';
+  document.getElementById('reverse-result-topic').textContent = topic || '';
+  showScreen('screen-reverse-result');
 }
 </script>
 </body>
