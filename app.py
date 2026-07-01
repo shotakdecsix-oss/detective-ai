@@ -246,16 +246,7 @@ def reverse_start():
     """あいちゃんがお題を決め、提案質問リストとともにセッションに保存する"""
     session_id = str(uuid.uuid4())
 
-    # 毎回異なるカテゴリを強制してランダム性を高める
-    categories = [
-        "食べ物・料理", "動物", "乗り物・機械", "アニメ・漫画キャラクター",
-        "スポーツ・遊び", "場所・建物・地名", "植物・自然現象", "道具・家電製品",
-        "有名人・歴史上の人物", "映画・テレビ番組", "音楽・楽器", "身の回りの日用品",
-    ]
-    chosen_category = random.choice(categories)
-
     # 提案質問は「何も知らない状態で最初に聞く汎用質問」として固定
-    # お題に依存させると絞り込みすぎになるため、カテゴリ探索レベルの質問にする
     GENERIC_STARTER_QUESTIONS = [
         "生き物ですか？",
         "日本に関係していますか？",
@@ -269,32 +260,23 @@ def reverse_start():
     fallback_topics = ["ねこ", "りんご", "しんかんせん", "ドラえもん", "サッカー"]
 
     try:
-        # お題の選択のみ Claude に任せる（質問生成は不要）
         resp = client.messages.create(
-            model=MODEL, max_tokens=120,
-            temperature=1.0,          # ← ランダム性を最大に
+            model=MODEL, max_tokens=60,
+            temperature=1.0,
             messages=[{"role": "user", "content":
-                f"逆アキネーターをします。カテゴリ「{chosen_category}」から具体的なものを1つ決めてください。"
-                "有名で、難しすぎず簡単すぎないものを選んでください。\n"
-                "JSONのみ出力（他のテキスト不要）:\n"
-                "{\"topic\": \"お題\", \"category\": \"カテゴリ\"}"
+                "小学生が知っていそうなものをあらゆるジャンルの中からランダムに変えて一つ決めてください。お題を1つだけ日本語で答えてください。説明は不要です。"
             }]
         )
-        raw = resp.content[0].text.strip()
-        if "```" in raw:
-            raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
-        s = raw.find("{"); e = raw.rfind("}") + 1
-        data = json.loads(raw[s:e]) if s >= 0 and e > s else {
-            "topic":    random.choice(fallback_topics),
-            "category": chosen_category,
-        }
-
-        topic = data.get("topic", random.choice(fallback_topics))
-        print(f"[REVERSE] カテゴリ={chosen_category} お題=「{topic}」")
+        topic = resp.content[0].text.strip().split("\n")[0].strip()
+        # 余分な記号・説明文を除去
+        for ch in ["「」『』【】。、！？!?・/"]:
+            topic = topic.strip(ch)
+        topic = topic or random.choice(fallback_topics)
+        print(f"[REVERSE] お題=「{topic}」")
 
         reverse_sessions[session_id] = {
             "topic":      topic,
-            "category":   data.get("category", chosen_category),
+            "category":   "",
             "qa_history": [],
         }
         return jsonify({
