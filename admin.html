@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あいちゃん 失敗分析ダッシュボード</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+  background: #FFF0F8;
+  color: #4A2D5A;
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+}
+h1 {
+  font-size: 20px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #FF6B9D, #9333EA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+.subtitle { font-size: 12px; color: #C084FC; margin-bottom: 20px; }
+
+.stats-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: #fff;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 14px;
+  padding: 14px 20px;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(255,107,157,.08);
+}
+.stat-card .num { font-size: 28px; font-weight: 900; color: #FF6B9D; }
+.stat-card .lbl { font-size: 11px; color: #C084FC; margin-top: 2px; }
+
+.btn {
+  padding: 10px 22px;
+  border-radius: 22px;
+  border: none;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-primary { background: linear-gradient(135deg,#FF6B9D,#C084FC); color:#fff; box-shadow:0 3px 12px rgba(255,107,157,.35); }
+.btn-primary:hover { transform:scale(1.04); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.btn-danger { background:#FEE2E2; border:1.5px solid #DC2626; color:#991B1B; }
+.btn-danger:hover { background:#DC2626; color:#fff; }
+
+.toolbar { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+
+/* 失敗カード */
+.failure-list { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.failure-card {
+  background: #fff;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(255,107,157,.06);
+}
+.failure-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255,107,157,.04);
+}
+.failure-header:hover { background: rgba(255,107,157,.08); }
+.fc-num { font-size: 11px; color: #C084FC; font-weight: 700; white-space: nowrap; }
+.fc-actual { font-size: 15px; font-weight: 900; color: #4A2D5A; }
+.fc-arrow { font-size: 12px; color: #C084FC; }
+.fc-guessed { font-size: 13px; color: #9CA3AF; }
+.fc-turns { font-size: 11px; color: #C084FC; margin-left: auto; white-space: nowrap; }
+.fc-mode {
+  font-size: 10px; background: #EDE9FE; color: #7C3AED;
+  border-radius: 8px; padding: 2px 8px; white-space: nowrap;
+}
+
+.failure-body { display: none; padding: 14px 16px; border-top: 1px solid #FFDAEA; }
+.failure-body.open { display: block; }
+
+.qa-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+.qa-table th { text-align: left; color: #C084FC; font-weight: 700; padding: 4px 6px; border-bottom: 1px solid #FFDAEA; }
+.qa-table td { padding: 5px 6px; border-bottom: 1px solid #FEF2F8; }
+.qa-table tr:last-child td { border-bottom: none; }
+.ans-yes { color: #16A34A; font-weight: 700; }
+.ans-no  { color: #DC2626; font-weight: 700; }
+.ans-maybe { color: #2563EB; font-weight: 700; }
+.ans-maybe_no { color: #7C3AED; font-weight: 700; }
+.ans-dunno { color: #9CA3AF; font-weight: 700; }
+
+.gap-box {
+  background: #EDE9FE;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #5B21B6;
+  line-height: 1.7;
+}
+.gap-box strong { color: #7C3AED; }
+
+/* 分析結果 */
+.analysis-box {
+  background: #fff;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #4A2D5A;
+  box-shadow: 0 2px 12px rgba(255,107,157,.08);
+}
+.loading { color: #C084FC; font-size: 13px; padding: 12px 0; }
+
+.timestamp { font-size: 10px; color: #DDD6FE; margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<h1>🔍 あいちゃん 失敗分析ダッシュボード</h1>
+<p class="subtitle">不正解ケースを記録・分析してプロンプトをチューニングする</p>
+
+<div class="stats-row" id="stats-row">
+  <div class="stat-card"><div class="num" id="stat-total">-</div><div class="lbl">失敗総数</div></div>
+  <div class="stat-card"><div class="num" id="stat-avg-turns">-</div><div class="lbl">平均問数</div></div>
+  <div class="stat-card"><div class="num" id="stat-phase">-</div><div class="lbl">フェーズ方式</div></div>
+  <div class="stat-card"><div class="num" id="stat-original">-</div><div class="lbl">元の仕様</div></div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-primary" id="btn-analyze" onclick="analyze()">🤖 Claude に失敗パターンを分析させる</button>
+  <button class="btn btn-danger" onclick="clearData()">🗑 データをクリア</button>
+  <span style="font-size:12px;color:#C084FC;" id="last-update"></span>
+</div>
+
+<div id="analysis-area"></div>
+
+<div class="failure-list" id="failure-list"></div>
+
+<script>
+const ansLabels = { yes:'はい', no:'いいえ', maybe:'たぶんはい', maybe_no:'たぶんいいえ', dunno:'わからない' };
+const ansCls    = { yes:'ans-yes', no:'ans-no', maybe:'ans-maybe', maybe_no:'ans-maybe_no', dunno:'ans-dunno' };
+
+let failures = [];
+
+async function load() {
+  const r = await fetch('/api/failures');
+  failures = await r.json();
+  failures = failures.slice().reverse(); // 新しい順
+
+  // stats
+  document.getElementById('stat-total').textContent = failures.length;
+  if (failures.length) {
+    const avgTurns = Math.round(failures.reduce((a,f) => a + f.turns, 0) / failures.length);
+    document.getElementById('stat-avg-turns').textContent = avgTurns;
+    document.getElementById('stat-phase').textContent = failures.filter(f => f.mode === 'phase').length;
+    document.getElementById('stat-original').textContent = failures.filter(f => f.mode === 'original').length;
+    document.getElementById('last-update').textContent = '最終: ' + new Date(failures[0].timestamp).toLocaleString('ja-JP');
+  } else {
+    document.getElementById('stat-avg-turns').textContent = '-';
+    document.getElementById('stat-phase').textContent = '-';
+    document.getElementById('stat-original').textContent = '-';
+  }
+
+  renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('failure-list');
+  list.innerHTML = '';
+
+  if (!failures.length) {
+    list.innerHTML = '<div style="text-align:center;color:#DDD6FE;padding:32px;font-size:14px;">まだ失敗データがありません 🌸</div>';
+    return;
+  }
+
+  failures.forEach((f, i) => {
+    const card = document.createElement('div');
+    card.className = 'failure-card';
+
+    const ts = new Date(f.timestamp).toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+    card.innerHTML = `
+      <div class="failure-header" onclick="toggleBody(${i})">
+        <span class="fc-num">#${failures.length - i} <span class="timestamp">${ts}</span></span>
+        <span class="fc-actual">「${f.actual}」</span>
+        <span class="fc-arrow">→</span>
+        <span class="fc-guessed">推理:「${f.guessed}」</span>
+        <span class="fc-turns">${f.turns}問</span>
+        <span class="fc-mode">${f.mode === 'phase' ? 'フェーズ' : '旧版'}</span>
+      </div>
+      <div class="failure-body" id="body-${i}">
+        <table class="qa-table">
+          <tr><th>Q</th><th>質問</th><th>回答</th></tr>
+          ${f.history.map((h, j) => `
+            <tr>
+              <td style="color:#C084FC;font-weight:700;">Q${j+1}</td>
+              <td>${h.question}</td>
+              <td class="${ansCls[h.answer] || ''}">${ansLabels[h.answer] || h.answer}</td>
+            </tr>
+          `).join('')}
+        </table>
+        ${f.gap ? `
+          <div class="gap-box">
+            <strong>❌ 誤推理の原因:</strong> ${f.gap.why_wrong || '-'}<br>
+            <strong>🔑 決定的だった質問:</strong> ${f.gap.key_question || '-'}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function toggleBody(i) {
+  const body = document.getElementById(`body-${i}`);
+  body.classList.toggle('open');
+}
+
+async function analyze() {
+  const btn = document.getElementById('btn-analyze');
+  const area = document.getElementById('analysis-area');
+  btn.disabled = true;
+  btn.textContent = '🔄 分析中…';
+  area.innerHTML = '<div class="loading">Claude が失敗パターンを分析中です… ✨</div>';
+
+  try {
+    const r = await fetch('/api/analyze-failures', { method: 'POST' });
+    const d = await r.json();
+    if (d.error) {
+      area.innerHTML = `<div class="analysis-box" style="color:#DC2626;">${d.error}</div>`;
+    } else {
+      area.innerHTML = `
+        <div style="font-size:12px;color:#C084FC;margin-bottom:6px;font-weight:700;">
+          📊 Claude の分析結果（直近${d.count}件ベース）
+        </div>
+        <div class="analysis-box">${d.analysis}</div>
+      `;
+    }
+  } catch (e) {
+    area.innerHTML = `<div class="analysis-box" style="color:#DC2626;">エラー: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🤖 Claude に失敗パターンを分析させる';
+}
+
+async function clearData() {
+  if (!confirm('失敗データをすべて削除しますか？')) return;
+  await fetch('/api/failures/clear', { method: 'POST' });
+  failures = [];
+  document.getElementById('stat-total').textContent = '0';
+  document.getElementById('stat-avg-turns').textContent = '-';
+  document.getElementById('stat-phase').textContent = '-';
+  document.getElementById('stat-original').textContent = '-';
+  document.getElementById('analysis-area').innerHTML = '';
+  renderList();
+}
+
+load();
+</script>
+</body>
+</html>
