@@ -792,8 +792,8 @@ rt { font-size: 9px; color: #C084FC; }
           <span class="mode-label">なにかを思い浮かべて、あいちゃんに当ててもらおう！</span>
         </button>
         <button class="btn-mode btn-mode-b" onclick="startReverseGame()">
-          🎯 ユーザーが当てる
-          <span class="mode-label">あいちゃんがものを決めるよ。質問して当ててね！</span>
+          🎯 ユーザーが<ruby>当<rt>あ</rt></ruby>てる
+          <span class="mode-label">あいちゃんがものを<ruby>決<rt>き</rt></ruby>めるよ。<ruby>質問<rt>しつもん</rt></ruby>して<ruby>当<rt>あ</rt></ruby>ててね！</span>
         </button>
       </div>
     </div>
@@ -1126,35 +1126,35 @@ rt { font-size: 9px; color: #C084FC; }
 
     <!-- 提案質問ボタン（ゲーム開始時に生成） -->
     <div class="suggested-questions hidden" id="reverse-suggested-wrap">
-      <div class="suggested-label">💡 よく使われる質問（タップで質問できるよ）</div>
+      <div class="suggested-label">💡 よく使われる<ruby>質問<rt>しつもん</rt></ruby>（タップで<ruby>質問<rt>しつもん</rt></ruby>できるよ）</div>
       <div class="suggested-btns" id="reverse-suggested-btns"></div>
     </div>
 
     <!-- QA履歴 -->
     <div class="evidence-panel" style="margin-bottom:12px">
-      <div class="evidence-title">📋 質問と回答の記録</div>
+      <div class="evidence-title">📋 <ruby>質問<rt>しつもん</rt></ruby>と<ruby>回答<rt>かいとう</rt></ruby>の<ruby>記録<rt>きろく</rt></ruby></div>
       <div id="reverse-qa-list"></div>
     </div>
 
     <!-- 自由入力エリア -->
-    <div class="suggested-label" style="margin-bottom:6px">✏️ 自分で質問する</div>
+    <div class="suggested-label" style="margin-bottom:6px">✏️ <ruby>自分<rt>じぶん</rt></ruby>で<ruby>質問<rt>しつもん</rt></ruby>する</div>
     <div class="reverse-input-area">
       <input type="text" id="reverse-question-input"
-             placeholder="はい/いいえで答えられる質問を入力…"
+             placeholder="はい/いいえでこたえられるしつもんをにゅうりょく…"
              onkeydown="if(event.key==='Enter')submitReverseQuestion()">
       <button class="btn-reverse-submit" id="reverse-submit-btn"
-              onclick="submitReverseQuestion()">質問する</button>
+              onclick="submitReverseQuestion()"><ruby>質問<rt>しつもん</rt></ruby>する</button>
     </div>
 
     <!-- 正解入力エリア（1問目以降に表示） -->
     <div class="reverse-guess-area hidden" id="reverse-guess-area">
-      <div class="reverse-guess-label">🎯 わかった？正解を入力してね！</div>
+      <div class="reverse-guess-label">🎯 わかった？せいかいを<ruby>入力<rt>にゅうりょく</rt></ruby>してね！</div>
       <div class="reverse-guess-row">
         <input type="text" id="reverse-guess-input"
-               placeholder="正解は…"
+               placeholder="せいかいは…"
                onkeydown="if(event.key==='Enter')submitReverseGuess()">
         <button class="btn-reverse-guess" id="reverse-guess-btn"
-                onclick="submitReverseGuess()">回答する</button>
+                onclick="submitReverseGuess()"><ruby>回答<rt>かいとう</rt></ruby>する</button>
       </div>
     </div>
   </div>
@@ -1173,7 +1173,7 @@ rt { font-size: 9px; color: #C084FC; }
     </div>
 
     <div class="topic-reveal">
-      <div class="topic-reveal-label">🔮 あいちゃんのひみつのお題</div>
+      <div class="topic-reveal-label">🔮 あいちゃんのひみつのお<ruby>題<rt>だい</rt></ruby></div>
       <div class="topic-reveal-answer" id="reverse-result-topic"></div>
     </div>
 
@@ -1498,23 +1498,29 @@ async function startReverseGame() {
     reverseSessionId = data.session_id;
     document.getElementById('reverse-status').textContent = data.message || 'よし！決めたよ！質問してね！';
 
-    // 提案質問ボタンを生成
-    const questions = data.suggested_questions || [];
-    if (questions.length > 0) {
-      const wrap = document.getElementById('reverse-suggested-wrap');
-      const container = document.getElementById('reverse-suggested-btns');
-      questions.forEach(q => {
-        const btn = document.createElement('button');
-        btn.className = 'btn-suggested';
-        btn.textContent = q;
-        btn.addEventListener('click', () => {
-          btn.disabled = true;
-          submitReverseQuestion(q);
-        });
-        container.appendChild(btn);
+    // 提案質問ボタンを生成（ふりがな付き固定リスト）
+    const SUGGESTED_QUESTIONS = [
+      { html: '<ruby>生<rt>い</rt></ruby>き<ruby>物<rt>もの</rt></ruby>ですか？',                                             text: '生き物ですか？' },
+      { html: '<ruby>日本<rt>にほん</rt></ruby>に<ruby>関係<rt>かんけい</rt></ruby>していますか？',                           text: '日本に関係していますか？' },
+      { html: '<ruby>食<rt>た</rt></ruby>べられますか？',                                                                     text: '食べられますか？' },
+      { html: '<ruby>手<rt>て</rt></ruby>で<ruby>持<rt>も</rt></ruby>てる<ruby>大<rt>おお</rt></ruby>きさですか？',           text: '手で持てる大きさですか？' },
+      { html: '<ruby>人間<rt>にんげん</rt></ruby>ですか？',                                                                   text: '人間ですか？' },
+      { html: 'テレビや<ruby>映画<rt>えいが</rt></ruby>にでてきますか？',                                                     text: 'テレビや映画にでてきますか？' },
+      { html: '<ruby>屋外<rt>おくがい</rt></ruby>にありますか？',                                                             text: '屋外にありますか？' },
+    ];
+    const wrap = document.getElementById('reverse-suggested-wrap');
+    const container = document.getElementById('reverse-suggested-btns');
+    SUGGESTED_QUESTIONS.forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-suggested';
+      btn.innerHTML = q.html;
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        submitReverseQuestion(q.text);
       });
-      wrap.classList.remove('hidden');
-    }
+      container.appendChild(btn);
+    });
+    wrap.classList.remove('hidden');
   } catch (e) {
     alert('つうしんエラー: ' + e.message);
   } finally {
