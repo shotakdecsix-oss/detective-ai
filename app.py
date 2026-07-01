@@ -4,7 +4,7 @@ Claude が何でも推理する探偵ゲーム
 Config: akinator_config.json
 """
 
-import json, os, re, uuid, anthropic
+import json, os, re, uuid, random, anthropic
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
@@ -243,28 +243,60 @@ def verify():
 
 @app.route("/api/reverse/start", methods=["POST"])
 def reverse_start():
-    """あいちゃんがお題を決めてセッションに保存する"""
+    """あいちゃんがお題を決め、提案質問リストとともにセッションに保存する"""
     session_id = str(uuid.uuid4())
+
+    # 毎回異なるカテゴリを強制してランダム性を高める
+    categories = [
+        "食べ物・料理", "動物", "乗り物・機械", "アニメ・漫画キャラクター",
+        "スポーツ・遊び", "場所・建物・地名", "植物・自然現象", "道具・家電製品",
+        "有名人・歴史上の人物", "映画・テレビ番組", "音楽・楽器", "身の回りの日用品",
+    ]
+    chosen_category = random.choice(categories)
+
+    fallback_topics = ["ねこ", "りんご", "しんかんせん", "ドラえもん", "サッカー", "富士山以外のなにか"]
+    fallback_questions = [
+        "生き物ですか？", "日本にありますか？", "食べられますか？",
+        "大きいですか？", "動きますか？", "子どもに人気ですか？", "室内にありますか？",
+    ]
+
     try:
         resp = client.messages.create(
-            model=MODEL, max_tokens=120,
+            model=MODEL, max_tokens=400,
+            temperature=1.0,          # ← ランダム性を最大に
             messages=[{"role": "user", "content":
-                "逆アキネーターを始めます。頭の中でものを1つ決めてください。"
-                "日本語で有名なもの（食べ物・動物・キャラクター・乗り物・場所など）を1つ選んでください。"
-                "難しすぎず簡単すぎないものにしてね。決まったら教えてください。\n"
-                "出力形式: {\"topic\": \"決めたもの\", \"category\": \"カテゴリ（10字以内）\"}"
+                f"逆アキネーターをします。カテゴリ「{chosen_category}」から具体的なものを1つ決めてください。"
+                "有名で、難しすぎず簡単すぎないものを選んでください。"
+                "次に、そのお題を当てるのに役立つ「はい/いいえ」質問を7つ考えてください。"
+                "質問はお題を直接バラさず、カテゴリや特徴を絞り込む内容にすること。\n"
+                "JSONのみ出力（他のテキスト不要）:\n"
+                "{\"topic\": \"お題\", \"category\": \"カテゴリ\", "
+                "\"questions\": [\"質問1?\", \"質問2?\", \"質問3?\", \"質問4?\", \"質問5?\", \"質問6?\", \"質問7?\"]}"
             }]
         )
         raw = resp.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
         s = raw.find("{"); e = raw.rfind("}") + 1
-        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"topic": "りんご", "category": "食べ物"}
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {
+            "topic":     random.choice(fallback_topics),
+            "category":  chosen_category,
+            "questions": fallback_questions,
+        }
+
+        topic = data.get("topic", random.choice(fallback_topics))
+        print(f"[REVERSE] カテゴリ={chosen_category} お題=「{topic}」")
 
         reverse_sessions[session_id] = {
-            "topic":      data.get("topic", "りんご"),
-            "category":   data.get("category", ""),
+            "topic":      topic,
+            "category":   data.get("category", chosen_category),
             "qa_history": [],
         }
-        return jsonify({"session_id": session_id, "message": "よし！決めたよ！なんでも質問してみて！"})
+        return jsonify({
+            "session_id":         session_id,
+            "message":            "よし！決めたよ！なんでも質問してみて！",
+            "suggested_questions": data.get("questions", fallback_questions),
+        })
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 

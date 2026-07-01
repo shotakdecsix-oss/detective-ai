@@ -582,6 +582,51 @@ rt { font-size: 9px; color: #C084FC; }
 .btn-reverse-guess:hover { transform: scale(1.05); }
 .btn-reverse-guess:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
+/* 提案質問ボタン群 */
+.suggested-questions {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.suggested-label {
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: #C084FC;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.suggested-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.btn-suggested {
+  padding: 7px 13px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.9);
+  border: 1.5px solid #FFDAEA;
+  font-size: 12px;
+  font-family: inherit;
+  color: #7C3AED;
+  cursor: pointer;
+  transition: all .15s;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.btn-suggested:hover:not(:disabled) {
+  background: rgba(255,107,157,.1);
+  border-color: #FF6B9D;
+  color: #FF6B9D;
+  transform: translateY(-1px);
+}
+.btn-suggested:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #9CA3AF;
+  text-decoration: line-through;
+}
+
 /* 逆モード結果：お題公開ボックス */
 .topic-reveal {
   width: 100%;
@@ -1079,13 +1124,20 @@ rt { font-size: 9px; color: #C084FC; }
       <div class="reverse-bubble-comment" id="reverse-bubble-comment"></div>
     </div>
 
+    <!-- 提案質問ボタン（ゲーム開始時に生成） -->
+    <div class="suggested-questions hidden" id="reverse-suggested-wrap">
+      <div class="suggested-label">💡 よく使われる質問（タップで質問できるよ）</div>
+      <div class="suggested-btns" id="reverse-suggested-btns"></div>
+    </div>
+
     <!-- QA履歴 -->
     <div class="evidence-panel" style="margin-bottom:12px">
       <div class="evidence-title">📋 質問と回答の記録</div>
       <div id="reverse-qa-list"></div>
     </div>
 
-    <!-- 質問入力エリア -->
+    <!-- 自由入力エリア -->
+    <div class="suggested-label" style="margin-bottom:6px">✏️ 自分で質問する</div>
     <div class="reverse-input-area">
       <input type="text" id="reverse-question-input"
              placeholder="はい/いいえで答えられる質問を入力…"
@@ -1422,13 +1474,15 @@ async function startReverseGame() {
   reverseHistory   = [];
   reverseWaiting   = false;
 
-  document.getElementById('reverse-qa-list').innerHTML    = '';
-  document.getElementById('reverse-turn-num').textContent = '0';
-  document.getElementById('reverse-status').textContent   = 'お題を考えてるよ…🤔';
+  document.getElementById('reverse-qa-list').innerHTML       = '';
+  document.getElementById('reverse-suggested-btns').innerHTML = '';
+  document.getElementById('reverse-suggested-wrap').classList.add('hidden');
+  document.getElementById('reverse-turn-num').textContent    = '0';
+  document.getElementById('reverse-status').textContent      = 'お題を考えてるよ…🤔';
   document.getElementById('reverse-bubble-wrap').classList.add('hidden');
   document.getElementById('reverse-guess-area').classList.add('hidden');
-  document.getElementById('reverse-question-input').value = '';
-  document.getElementById('reverse-guess-input').value    = '';
+  document.getElementById('reverse-question-input').value    = '';
+  document.getElementById('reverse-guess-input').value       = '';
 
   showScreen('screen-reverse');
   setReverseLoading(true);
@@ -1443,6 +1497,24 @@ async function startReverseGame() {
     if (data.error) { alert('エラー: ' + data.error); return; }
     reverseSessionId = data.session_id;
     document.getElementById('reverse-status').textContent = data.message || 'よし！決めたよ！質問してね！';
+
+    // 提案質問ボタンを生成
+    const questions = data.suggested_questions || [];
+    if (questions.length > 0) {
+      const wrap = document.getElementById('reverse-suggested-wrap');
+      const container = document.getElementById('reverse-suggested-btns');
+      questions.forEach(q => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-suggested';
+        btn.textContent = q;
+        btn.addEventListener('click', () => {
+          btn.disabled = true;
+          submitReverseQuestion(q);
+        });
+        container.appendChild(btn);
+      });
+      wrap.classList.remove('hidden');
+    }
   } catch (e) {
     alert('つうしんエラー: ' + e.message);
   } finally {
@@ -1457,11 +1529,11 @@ function setReverseLoading(on) {
   document.getElementById('reverse-question-input').disabled = on;
 }
 
-async function submitReverseQuestion() {
+async function submitReverseQuestion(overrideQuestion) {
   const input    = document.getElementById('reverse-question-input');
-  const question = input.value.trim();
+  const question = (overrideQuestion !== undefined) ? overrideQuestion : input.value.trim();
   if (!question || reverseWaiting || !reverseSessionId) return;
-  input.value = '';
+  if (overrideQuestion === undefined) input.value = '';  // 自由入力の場合のみクリア
   setReverseLoading(true);
   try {
     const res  = await fetch('/api/reverse/question', {
