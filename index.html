@@ -1125,6 +1125,16 @@ rt { font-size: 9px; color: #C084FC; }
       <div class="reverse-bubble-comment" id="reverse-bubble-comment"></div>
     </div>
 
+    <!-- 自由入力エリア -->
+    <div class="suggested-label" style="margin-bottom:6px">✏️ <ruby>自分<rt>じぶん</rt></ruby>で<ruby>質問<rt>しつもん</rt></ruby>する</div>
+    <div class="reverse-input-area">
+      <input type="text" id="reverse-question-input"
+             placeholder="はい/いいえでこたえられるしつもんをにゅうりょく…"
+             onkeydown="if(event.key==='Enter')submitReverseQuestion()">
+      <button class="btn-reverse-submit" id="reverse-submit-btn"
+              onclick="submitReverseQuestion()"><ruby>質問<rt>しつもん</rt></ruby>する</button>
+    </div>
+
     <!-- 提案質問ボタン（ゲーム開始時に生成） -->
     <div class="suggested-questions hidden" id="reverse-suggested-wrap">
       <div class="suggested-label">💡 よく使われる<ruby>質問<rt>しつもん</rt></ruby>（タップで<ruby>質問<rt>しつもん</rt></ruby>できるよ）</div>
@@ -1135,16 +1145,6 @@ rt { font-size: 9px; color: #C084FC; }
     <div class="evidence-panel" style="margin-bottom:12px">
       <div class="evidence-title">📋 <ruby>質問<rt>しつもん</rt></ruby>と<ruby>回答<rt>かいとう</rt></ruby>の<ruby>記録<rt>きろく</rt></ruby></div>
       <div id="reverse-qa-list"></div>
-    </div>
-
-    <!-- 自由入力エリア -->
-    <div class="suggested-label" style="margin-bottom:6px">✏️ <ruby>自分<rt>じぶん</rt></ruby>で<ruby>質問<rt>しつもん</rt></ruby>する</div>
-    <div class="reverse-input-area">
-      <input type="text" id="reverse-question-input"
-             placeholder="はい/いいえでこたえられるしつもんをにゅうりょく…"
-             onkeydown="if(event.key==='Enter')submitReverseQuestion()">
-      <button class="btn-reverse-submit" id="reverse-submit-btn"
-              onclick="submitReverseQuestion()"><ruby>質問<rt>しつもん</rt></ruby>する</button>
     </div>
 
     <!-- 正解入力エリア（1問目以降に表示） -->
@@ -1508,7 +1508,7 @@ async function startReverseGame() {
     // 提案質問ボタンを生成（ふりがな付き固定リスト）
     const SUGGESTED_QUESTIONS = [
       { html: '<ruby>生<rt>い</rt></ruby>き<ruby>物<rt>もの</rt></ruby>ですか？',                                             text: '生き物ですか？' },
-      { html: '<ruby>日本<rt>にほん</rt></ruby>だけにありますか？',                                                          text: '日本だけにありますか？' },
+      { html: '<ruby>日本<rt>にほん</rt></ruby>で<ruby>誕生<rt>たんじょう</rt></ruby>しましたか？',                          text: '日本で誕生しましたか？' },
       { html: '<ruby>食<rt>た</rt></ruby>べられますか？',                                                                     text: '食べられますか？' },
       { html: '<ruby>手<rt>て</rt></ruby>で<ruby>持<rt>も</rt></ruby>てる<ruby>大<rt>おお</rt></ruby>きさですか？',           text: '手で持てる大きさですか？' },
       { html: '<ruby>人間<rt>にんげん</rt></ruby>ですか？',                                                                   text: '人間ですか？' },
