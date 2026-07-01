@@ -268,6 +268,7 @@ h1 ruby rt { font-size: 9px; letter-spacing: .04em; }
 .ev-ans.maybe    { color: #2563EB; }
 .ev-ans.maybe_no { color: #7C3AED; }
 .ev-ans.dunno    { color: #6B7280; }
+.ev-comment      { font-weight: 400; font-size: 10px; color: #9333EA; opacity: .8; margin-left: 2px; }
 
 /* ── 推理発表画面 ─────────────────────────────────────── */
 #screen-guess { gap: 0; }
@@ -1172,6 +1173,12 @@ rt { font-size: 9px; color: #C084FC; }
       <div class="result-msg"   id="reverse-result-msg"></div>
     </div>
 
+    <!-- ヒント質問（不正解時のみ表示） -->
+    <div id="reverse-hint-panel" style="display:none; width:100%; background:rgba(237,233,254,.55); border:1.5px solid #C084FC; border-radius:14px; padding:14px 16px; margin-bottom:14px;">
+      <div style="font-size:11px; letter-spacing:.15em; color:#9333EA; margin-bottom:10px; font-weight:700;">💡 こんな<ruby>質問<rt>しつもん</rt></ruby>をすればよかった！</div>
+      <ul id="reverse-hint-list" style="padding-left:0; margin:0; list-style:none; display:flex; flex-direction:column; gap:6px;"></ul>
+    </div>
+
     <div class="topic-reveal">
       <div class="topic-reveal-label">🔮 あいちゃんのひみつのお<ruby>題<rt>だい</rt></ruby></div>
       <div class="topic-reveal-answer" id="reverse-result-topic"></div>
@@ -1570,10 +1577,11 @@ function addReverseQA(num, question, answer, comment) {
 
   const el = document.createElement('div');
   el.className = 'evidence-item';
+  const commentHtml = comment ? `<span class="ev-comment">（${comment}）</span>` : '';
   el.innerHTML = `
     <span class="ev-q">Q${num}</span>
     <span class="ev-text">${question}</span>
-    <span class="ev-ans ${evCls}">${answer}</span>
+    <span class="ev-ans ${evCls}">${answer}${commentHtml}</span>
   `;
   const list = document.getElementById('reverse-qa-list');
   list.appendChild(el);
@@ -1602,7 +1610,7 @@ async function submitReverseGuess() {
     const data = await res.json();
     if (data.error) { alert('エラー: ' + data.error); return; }
     flash();
-    showReverseResult(data.correct, data.topic, data.message);
+    showReverseResult(data.correct, data.topic, data.message, data.hint_questions);
   } catch (e) {
     alert('つうしんエラー: ' + e.message);
   } finally {
@@ -1610,7 +1618,7 @@ async function submitReverseGuess() {
   }
 }
 
-function showReverseResult(correct, topic, message) {
+function showReverseResult(correct, topic, message, hintQuestions) {
   const banner = document.getElementById('reverse-result-banner');
   banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
   document.getElementById('reverse-result-icon').textContent  = correct ? '🎉' : '🌸';
@@ -1619,6 +1627,23 @@ function showReverseResult(correct, topic, message) {
     : '<ruby>残念<rt>ざんねん</rt></ruby>…🤔';
   document.getElementById('reverse-result-msg').textContent   = message || '';
   document.getElementById('reverse-result-topic').textContent = topic || '';
+
+  // ヒント質問パネル（不正解時のみ）
+  const hintPanel = document.getElementById('reverse-hint-panel');
+  const hintList  = document.getElementById('reverse-hint-list');
+  hintList.innerHTML = '';
+  if (!correct && hintQuestions && hintQuestions.length > 0) {
+    hintQuestions.forEach(q => {
+      const li = document.createElement('li');
+      li.textContent = '• ' + q;
+      li.style.cssText = 'font-size:12px; color:#7C3AED; line-height:1.7;';
+      hintList.appendChild(li);
+    });
+    hintPanel.style.display = 'block';
+  } else {
+    hintPanel.style.display = 'none';
+  }
+
   showScreen('screen-reverse-result');
 }
 </script>

@@ -356,8 +356,32 @@ def reverse_guess():
             "correct": False, "topic": topic,
             "message": f"ちがうよ！正解は「{topic}」だよ！"
         }
+        correct = data.get("correct", False)
+
+        # 不正解の場合、効果的だった質問をヒントとして生成
+        hint_questions = []
+        if not correct:
+            try:
+                hint_resp = client.messages.create(
+                    model=MODEL, max_tokens=200,
+                    messages=[{"role": "user", "content":
+                        f"お題は「{topic}」でした。ユーザーはこれを当てられませんでした。\n"
+                        f"このお題を当てるために効果的だった質問を3〜5つ、短い日本語で教えてください。\n"
+                        f"小学生にわかるやさしい言葉で。リスト形式（箇条書き）で答えてください。"
+                    }]
+                )
+                raw_hints = hint_resp.content[0].text.strip()
+                for line in raw_hints.splitlines():
+                    line = line.lstrip("・-•*　 ").strip()
+                    if line:
+                        hint_questions.append(line)
+                hint_questions = hint_questions[:5]
+            except Exception:
+                pass
+
         # セッション削除
         reverse_sessions.pop(session_id, None)
+        data["hint_questions"] = hint_questions
         return jsonify(data)
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
