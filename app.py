@@ -25,6 +25,8 @@ app    = Flask(__name__, static_folder=BASE_DIR)
 
 # 逆モード用セッションストア（メモリ内）
 reverse_sessions: dict = {}
+# 最近使ったお題（重複防止用、最大30件）
+recent_topics: list = []
 
 JST = timezone(timedelta(hours=9))
 SERVER_START = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
@@ -260,11 +262,16 @@ def reverse_start():
     fallback_topics = ["ねこ", "りんご", "しんかんせん", "ドラえもん", "サッカー"]
 
     try:
+        avoid_line = (
+            f"\nただし、以下のお題はすでに使ったので選ばないでください：{recent_topics}"
+            if recent_topics else ""
+        )
         resp = client.messages.create(
             model=MODEL, max_tokens=60,
             temperature=1.0,
             messages=[{"role": "user", "content":
                 "小学生が知っていそうなものをあらゆるジャンルの中からランダムに変えて一つ決めてください。お題を1つだけ日本語で答えてください。説明は不要です。"
+                + avoid_line
             }]
         )
         topic = resp.content[0].text.strip().split("\n")[0].strip()
@@ -272,7 +279,11 @@ def reverse_start():
         for ch in ["「」『』【】。、！？!?・/"]:
             topic = topic.strip(ch)
         topic = topic or random.choice(fallback_topics)
-        print(f"[REVERSE] お題=「{topic}」")
+        # 重複防止リストに追加（最大30件）
+        recent_topics.insert(0, topic)
+        if len(recent_topics) > 30:
+            recent_topics.pop()
+        print(f"[REVERSE] お題=「{topic}」 (履歴{len(recent_topics)}件)")
 
         reverse_sessions[session_id] = {
             "topic":      topic,
