@@ -254,24 +254,30 @@ def reverse_start():
     ]
     chosen_category = random.choice(categories)
 
-    fallback_topics = ["ねこ", "りんご", "しんかんせん", "ドラえもん", "サッカー", "富士山以外のなにか"]
-    fallback_questions = [
-        "生き物ですか？", "日本にありますか？", "食べられますか？",
-        "大きいですか？", "動きますか？", "子どもに人気ですか？", "室内にありますか？",
+    # 提案質問は「何も知らない状態で最初に聞く汎用質問」として固定
+    # お題に依存させると絞り込みすぎになるため、カテゴリ探索レベルの質問にする
+    GENERIC_STARTER_QUESTIONS = [
+        "生き物ですか？",
+        "日本に関係していますか？",
+        "食べられますか？",
+        "手で持てる大きさですか？",
+        "人間ですか？",
+        "テレビや映画に出てきますか？",
+        "屋外にありますか？",
     ]
 
+    fallback_topics = ["ねこ", "りんご", "しんかんせん", "ドラえもん", "サッカー"]
+
     try:
+        # お題の選択のみ Claude に任せる（質問生成は不要）
         resp = client.messages.create(
-            model=MODEL, max_tokens=400,
+            model=MODEL, max_tokens=120,
             temperature=1.0,          # ← ランダム性を最大に
             messages=[{"role": "user", "content":
                 f"逆アキネーターをします。カテゴリ「{chosen_category}」から具体的なものを1つ決めてください。"
-                "有名で、難しすぎず簡単すぎないものを選んでください。"
-                "次に、そのお題を当てるのに役立つ「はい/いいえ」質問を7つ考えてください。"
-                "質問はお題を直接バラさず、カテゴリや特徴を絞り込む内容にすること。\n"
+                "有名で、難しすぎず簡単すぎないものを選んでください。\n"
                 "JSONのみ出力（他のテキスト不要）:\n"
-                "{\"topic\": \"お題\", \"category\": \"カテゴリ\", "
-                "\"questions\": [\"質問1?\", \"質問2?\", \"質問3?\", \"質問4?\", \"質問5?\", \"質問6?\", \"質問7?\"]}"
+                "{\"topic\": \"お題\", \"category\": \"カテゴリ\"}"
             }]
         )
         raw = resp.content[0].text.strip()
@@ -279,9 +285,8 @@ def reverse_start():
             raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
         s = raw.find("{"); e = raw.rfind("}") + 1
         data = json.loads(raw[s:e]) if s >= 0 and e > s else {
-            "topic":     random.choice(fallback_topics),
-            "category":  chosen_category,
-            "questions": fallback_questions,
+            "topic":    random.choice(fallback_topics),
+            "category": chosen_category,
         }
 
         topic = data.get("topic", random.choice(fallback_topics))
@@ -293,9 +298,9 @@ def reverse_start():
             "qa_history": [],
         }
         return jsonify({
-            "session_id":         session_id,
-            "message":            "よし！決めたよ！なんでも質問してみて！",
-            "suggested_questions": data.get("questions", fallback_questions),
+            "session_id":          session_id,
+            "message":             "よし！決めたよ！なんでも質問してみて！",
+            "suggested_questions": GENERIC_STARTER_QUESTIONS,
         })
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
