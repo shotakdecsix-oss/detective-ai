@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>あいちゃん 失敗分析ダッシュボード</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Kaku Gothic Pro', Meiryo, sans-serif;
+      background: linear-gradient(135deg, #FFE0F0 0%, #F0E0FF 100%);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    h1 {
+      text-align: center;
+      color: #C040A0;
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #9060B0;
+      font-size: 0.85rem;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(180,80,180,0.12);
+    }
+    .card h2 {
+      color: #C040A0;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      border-bottom: 2px solid #FFB0E0;
+      padding-bottom: 6px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: linear-gradient(135deg, #FF6B9D, #C084FC); color: white; }
+    .btn-danger  { background: #FF6B6B; color: white; }
+    .stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .stat-box {
+      background: #FFF0F8;
+      border-radius: 10px;
+      padding: 12px 20px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .stat-box .num { font-size: 2rem; font-weight: bold; color: #C040A0; }
+    .stat-box .label { font-size: 0.75rem; color: #9060B0; }
+    .failure-list { list-style: none; }
+    .failure-item {
+      border: 1px solid #F0D0FF;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #FFF8FF;
+    }
+    .failure-item .meta {
+      font-size: 0.75rem;
+      color: #B060C0;
+      margin-bottom: 4px;
+    }
+    .failure-item .guess-actual {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .failure-item .wrong { color: #E04040; }
+    .failure-item .right { color: #40A040; }
+    .failure-item .why {
+      font-size: 0.8rem;
+      color: #706080;
+      background: #F8F0FF;
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin-top: 4px;
+    }
+    .analysis-box {
+      background: #FFF8F0;
+      border: 1px solid #FFD080;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #504030;
+      white-space: pre-wrap;
+      min-height: 60px;
+    }
+    .empty-msg {
+      text-align: center;
+      color: #B090C0;
+      padding: 24px;
+      font-size: 0.9rem;
+    }
+    .loading { color: #C084FC; font-style: italic; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #C040A0;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a class="back-link" href="/">← ゲームにもどる</a>
+  <h1>🔍 あいちゃん 失敗分析ダッシュボード</h1>
+  <p class="subtitle">不正解ログを分析して、あいちゃんを賢くしよう！</p>
+
+  <!-- 統計 -->
+  <div class="card">
+    <h2>📊 統計</h2>
+    <div class="stats">
+      <div class="stat-box">
+        <div class="num" id="total-count">—</div>
+        <div class="label">不正解数</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="avg-turns">—</div>
+        <div class="label">平均問数</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="analyzeFailures()">🤖 Claudeに失敗パターンを分析させる</button>
+    <button class="btn btn-danger" onclick="clearFailures()">🗑 ログをクリア</button>
+  </div>
+
+  <!-- Claude分析結果 -->
+  <div class="card" id="analysis-card" style="display:none">
+    <h2>🧠 Claude の分析結果</h2>
+    <div class="analysis-box" id="analysis-result"></div>
+  </div>
+
+  <!-- 失敗一覧 -->
+  <div class="card">
+    <h2>📋 失敗ログ一覧（新しい順）</h2>
+    <ul class="failure-list" id="failure-list">
+      <li class="empty-msg loading">読み込み中…</li>
+    </ul>
+  </div>
+
+  <script>
+    let failures = [];
+
+    async function loadFailures() {
+      try {
+        const res = await fetch('/api/failures');
+        failures = await res.json();
+        renderFailures();
+      } catch(e) {
+        document.getElementById('failure-list').innerHTML =
+          '<li class="empty-msg">読み込みに失敗しました</li>';
+      }
+    }
+
+    function renderFailures() {
+      const total = failures.length;
+      document.getElementById('total-count').textContent = total;
+      if (total > 0) {
+        const avg = (failures.reduce((s, f) => s + (f.turns || 0), 0) / total).toFixed(1);
+        document.getElementById('avg-turns').textContent = avg;
+      } else {
+        document.getElementById('avg-turns').textContent = '—';
+      }
+
+      const ul = document.getElementById('failure-list');
+      if (total === 0) {
+        ul.innerHTML = '<li class="empty-msg">失敗ログはまだありません 🎉</li>';
+        return;
+      }
+
+      const reversed = [...failures].reverse();
+      ul.innerHTML = reversed.map((f, i) => `
+        <li class="failure-item">
+          <div class="meta">${f.timestamp || ''} ／ ${f.turns || 0}問</div>
+          <div class="guess-actual">
+            推理: <span class="wrong">「${f.guess}」</span>
+            → 正解: <span class="right">「${f.actual}」</span>
+          </div>
+          ${f.analysis ? `
+            <div class="why">
+              ❓ ${f.analysis.why_wrong || ''}<br>
+              💡 決定的な質問: ${f.analysis.key_question || '—'}
+            </div>` : ''}
+        </li>
+      `).join('');
+    }
+
+    async function analyzeFailures() {
+      const card = document.getElementById('analysis-card');
+      const box  = document.getElementById('analysis-result');
+      card.style.display = 'block';
+      box.textContent = '分析中…（少し待ってね）';
+      box.className = 'analysis-box loading';
+
+      try {
+        const res  = await fetch('/api/analyze-failures', { method: 'POST' });
+        const data = await res.json();
+        box.textContent = data.analysis || data.error || 'エラーが発生しました';
+        box.className   = 'analysis-box';
+        card.scrollIntoView({ behavior: 'smooth' });
+      } catch(e) {
+        box.textContent = '通信エラーが発生しました';
+        box.className   = 'analysis-box';
+      }
+    }
+
+    async function clearFailures() {
+      if (!confirm('失敗ログをすべて削除しますか？')) return;
+      try {
+        await fetch('/api/failures/clear', { method: 'POST' });
+        failures = [];
+        renderFailures();
+        document.getElementById('analysis-card').style.display = 'none';
+      } catch(e) {
+        alert('クリアに失敗しました');
+      }
+    }
+
+    loadFailures();
+  </script>
+</body>
+</html>
