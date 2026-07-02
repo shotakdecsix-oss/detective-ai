@@ -1357,6 +1357,7 @@ async function askNext() {
   if (waitingForAnswer) return;
   setLoading(true);
   const myGameId = gameId;  // このリクエスト発行時のゲームIDを記憶
+  let needsRetry = false;
 
   try {
     const res  = await fetch('/api/next', {
@@ -1375,13 +1376,24 @@ async function askNext() {
       showQuestion(data);
     } else if (data.type === 'guess') {
       // 質問が1問も行われていない場合はguessしない（即時推理バグ防止）
-      if (history.length === 0) return;
-      showGuess(data);
+      // return だと finally の setLoading(false) が空テキストを表示してしまうため
+      // needsRetry フラグでローディング状態を維持したまま再試行する
+      if (history.length === 0) {
+        needsRetry = true;
+      } else {
+        showGuess(data);
+      }
     }
   } catch (e) {
     if (myGameId === gameId) alert('つうしんエラー: ' + e.message);
   } finally {
-    if (myGameId === gameId) setLoading(false);
+    if (myGameId === gameId && !needsRetry) setLoading(false);
+  }
+
+  // 初回でguessが返ってきた場合：ローディング表示を維持したまま再試行
+  if (needsRetry && myGameId === gameId) {
+    waitingForAnswer = false;
+    askNext();
   }
 }
 
