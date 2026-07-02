@@ -1322,6 +1322,8 @@ let history      = [];
 let currentGuess = null;
 let waitingForAnswer = false;
 let currentQuestionText = '';  // ふりがなHTMLを除いた質問文（履歴保存用）
+let gameId = 0;  // ゲームセッションID（古いAPIレスポンスを無視するため）
+let reverseGameId = 0;  // 逆モード用ゲームID（古いAPIレスポンスを無視するため）
 
 // ── 画面切替 ─────────────────────────────────────────────────────
 function showScreen(id) {
@@ -1339,10 +1341,13 @@ function flash() {
 
 // ── ゲーム開始 ───────────────────────────────────────────────────
 function startGame() {
+  gameId++;                      // 旧ゲームのレスポンスを無効化
   history      = [];
   currentGuess = null;
+  currentQuestionText = '';
   waitingForAnswer = false;
   document.getElementById('evidence-list').innerHTML = '';
+  document.getElementById('turn-num').textContent = '1';  // 問数を即座にリセット
   showScreen('screen-game');
   askNext();
 }
@@ -1351,6 +1356,7 @@ function startGame() {
 async function askNext() {
   if (waitingForAnswer) return;
   setLoading(true);
+  const myGameId = gameId;  // このリクエスト発行時のゲームIDを記憶
 
   try {
     const res  = await fetch('/api/next', {
@@ -1360,6 +1366,9 @@ async function askNext() {
     });
     const data = await res.json();
 
+    // 別のゲームが始まっていたら古いレスポンスを無視
+    if (myGameId !== gameId) return;
+
     if (data.error) { alert('エラー: ' + data.error); return; }
 
     if (data.type === 'question') {
@@ -1368,9 +1377,9 @@ async function askNext() {
       showGuess(data);
     }
   } catch (e) {
-    alert('つうしんエラー: ' + e.message);
+    if (myGameId === gameId) alert('つうしんエラー: ' + e.message);
   } finally {
-    setLoading(false);
+    if (myGameId === gameId) setLoading(false);
   }
 }
 
@@ -1568,6 +1577,7 @@ function resetGame() {
 
 // ── トップへ戻る（両モード共通） ──────────────────────────────────
 function resetToStart() {
+  reverseGameId++;               // 旧ゲームのレスポンスを無効化
   history = [];
   currentGuess = null;
   reverseSessionId = null;
@@ -1575,6 +1585,7 @@ function resetToStart() {
   selectedGenre    = null;
   document.getElementById('evidence-list').innerHTML   = '';
   document.getElementById('reverse-qa-list').innerHTML = '';
+  document.getElementById('reverse-turn-num').textContent = '0';
   showScreen('screen-start');
 }
 
@@ -1587,6 +1598,7 @@ let reverseWaiting   = false;
 let selectedGenre    = null;
 
 async function startReverseGame() {
+  reverseGameId++;               // 旧ゲームのレスポンスを無効化
   reverseSessionId = null;
   reverseHistory   = [];
   reverseWaiting   = false;
@@ -1660,6 +1672,7 @@ async function submitReverseQuestion(overrideQuestion) {
   if (!question || reverseWaiting || !reverseSessionId) return;
   if (overrideQuestion === undefined) input.value = '';  // 自由入力の場合のみクリア
   setReverseLoading(true);
+  const myReverseGameId = reverseGameId;  // このリクエスト発行時のゲームIDを記憶
   try {
     const res  = await fetch('/api/reverse/question', {
       method: 'POST',
@@ -1667,15 +1680,17 @@ async function submitReverseQuestion(overrideQuestion) {
       body: JSON.stringify({ session_id: reverseSessionId, question }),
     });
     const data = await res.json();
+    // 別のゲームが始まっていたら古いレスポンスを無視
+    if (myReverseGameId !== reverseGameId) return;
     if (data.error) { alert('エラー: ' + data.error); return; }
     reverseHistory.push({ question, answer: data.answer, comment: data.comment || '' });
     addReverseQA(reverseHistory.length, question, data.answer, data.comment);
     flash();
     fetchNextQuestions(); // 次の質問ボタンを非同期で更新
   } catch (e) {
-    alert('つうしんエラー: ' + e.message);
+    if (myReverseGameId === reverseGameId) alert('つうしんエラー: ' + e.message);
   } finally {
-    setReverseLoading(false);
+    if (myReverseGameId === reverseGameId) setReverseLoading(false);
   }
 }
 
@@ -1734,6 +1749,7 @@ async function submitReverseGuess() {
 // ── 次の質問ボタンを動的取得・更新 ───────────────────────────────
 async function fetchNextQuestions() {
   if (!reverseSessionId) return;
+  const mySessionId = reverseSessionId;  // このリクエスト発行時のセッションIDを記憶
   const wrap      = document.getElementById('reverse-suggested-wrap');
   const container = document.getElementById('reverse-suggested-btns');
   wrap.classList.remove('hidden');
@@ -1746,6 +1762,8 @@ async function fetchNextQuestions() {
       body: JSON.stringify({ session_id: reverseSessionId, qa_history: reverseHistory }),
     });
     const data = await res.json();
+    // 別のゲームが始まっていたら古いレスポンスを無視
+    if (mySessionId !== reverseSessionId) return;
     container.innerHTML = '';
     (data.questions || []).forEach(q => {
       const btn = document.createElement('button');
