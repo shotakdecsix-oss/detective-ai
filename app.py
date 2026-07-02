@@ -4,9 +4,25 @@ Claude が何でも推理する探偵ゲーム
 Config: akinator_config.json
 """
 
-import json, os, re, uuid, random, anthropic
+import json, os, re, uuid, random, anthropic, pykakasi
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, send_from_directory
+
+# ── ふりがな変換 ──────────────────────────────────────────────────
+_kks = pykakasi.kakasi()
+
+def add_furigana(text: str) -> str:
+    """漢字にrubyタグでふりがなをつける"""
+    result = _kks.convert(text)
+    out = []
+    for item in result:
+        orig = item['orig']
+        hira = item['hira']
+        if any('一' <= c <= '鿿' for c in orig):
+            out.append(f'<ruby>{orig}<rt>{hira}</rt></ruby>')
+        else:
+            out.append(orig)
+    return ''.join(out)
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "akinator_config.json")
@@ -384,7 +400,10 @@ def reverse_question():
         data = json.loads(raw[s:e]) if s >= 0 and e > s else {"answer": "わからない", "comment": "うーん！"}
 
         session["qa_history"].append({"question": question, "answer": data["answer"]})
-        return jsonify({"answer": data.get("answer", "わからない"), "comment": data.get("comment", "")})
+        return jsonify({
+            "answer":  data.get("answer", "わからない"),
+            "comment": add_furigana(data.get("comment", "")),
+        })
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 
@@ -436,7 +455,7 @@ def reverse_guess():
                 for line in raw_hints.splitlines():
                     line = line.lstrip("・-•*　 ").strip()
                     if line:
-                        hint_questions.append(line)
+                        hint_questions.append(add_furigana(line))
                 hint_questions = hint_questions[:5]
             except Exception:
                 pass
@@ -493,7 +512,8 @@ def reverse_next_questions():
             raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
         s = raw.find("{"); e = raw.rfind("}") + 1
         data = json.loads(raw[s:e]) if s >= 0 and e > s else {"questions": []}
-        return jsonify({"questions": data.get("questions", [])[:6]})
+        questions = [add_furigana(q) for q in data.get("questions", [])[:6]]
+        return jsonify({"questions": questions})
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 
@@ -530,7 +550,7 @@ def reverse_genres():
             raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
         s = raw.find("{"); e = raw.rfind("}") + 1
         data = json.loads(raw[s:e]) if s >= 0 and e > s else {"genres": []}
-        genres = data.get("genres", [])
+        genres = [add_furigana(g) for g in data.get("genres", [])]
         random.shuffle(genres)
         return jsonify({"genres": genres})
     except Exception as ex:
@@ -573,7 +593,8 @@ def reverse_choices():
             else:
                 choices.append(topic)
         random.shuffle(choices)
-        return jsonify({"choices": choices[:10]})
+        choices_html = [add_furigana(c) for c in choices[:10]]
+        return jsonify({"choices": choices_html})
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 

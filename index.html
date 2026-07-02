@@ -1748,11 +1748,11 @@ async function fetchNextQuestions() {
     (data.questions || []).forEach(q => {
       const btn = document.createElement('button');
       btn.className = 'btn-suggested';
-      btn.textContent = q;
+      btn.innerHTML = q;
       btn.addEventListener('click', () => {
         if (reverseWaiting) return;
         btn.disabled = true;
-        submitReverseQuestion(q);
+        submitReverseQuestion(btn.textContent);
       });
       container.appendChild(btn);
     });
@@ -1789,8 +1789,8 @@ function showGenreScreen(genres) {
   genres.forEach(g => {
     const btn = document.createElement('button');
     btn.className = 'btn-choice';
-    btn.textContent = g;
-    btn.addEventListener('click', () => onGenreSelected(g));
+    btn.innerHTML = g;
+    btn.addEventListener('click', () => onGenreSelected(btn.textContent));
     container.appendChild(btn);
   });
   showScreen('screen-reverse-genre');
@@ -1826,8 +1826,8 @@ function showChoicesScreen(genre, choices) {
   choices.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'btn-choice';
-    btn.textContent = c;
-    btn.addEventListener('click', () => onChoiceSelected(c));
+    btn.innerHTML = c;
+    btn.addEventListener('click', () => onChoiceSelected(btn.textContent));
     container.appendChild(btn);
   });
   showScreen('screen-reverse-choices');
