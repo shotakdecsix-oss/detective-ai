@@ -365,12 +365,13 @@ def reverse_question():
         resp = client.messages.create(
             model=MODEL, max_tokens=120,
             messages=[{"role": "user", "content":
-                f"あなたが決めたお題は「{topic}」です。\n"
-                f"これまでのQ&A:\n{history_text}\n\n"
-                f"ユーザーの質問:「{question}」\n"
-                f"このお題に対して正直に「はい」「いいえ」「たぶん」「わからない」のどれかで答えて、"
-                f"あいちゃんらしい一言コメントを添えてください（お題は絶対に言わないこと）。\n"
-                f"コメントは小学1年生でもわかるやさしい言葉で、ひらがなを多めに使ってください。むずかしい漢字は使わないでください。\n"
+                f"あなたは「なんでもあてっこゲーム」の回答者です。\n"
+                f"あなたのひみつのお題は「{topic}」です。\n"
+                f"絶対にこのお題「{topic}」だけを念頭に置いて答えてください。\n"
+                f"これまでのQ&A（参考）:\n{history_text}\n\n"
+                f"ユーザーの質問:「{question}」\n\n"
+                f"「{topic}」について、この質問が正しいかどうか「はい」「いいえ」「たぶん」「わからない」のどれかで答えてください。\n"
+                f"その後、小学生にわかるやさしい言葉でひとことコメントしてください（ひらがな多め、お題は絶対に言わないこと）。\n"
                 f"出力形式: {{\"answer\": \"はい\", \"comment\": \"コメント（20字以内）\"}}"
             }]
         )
@@ -451,9 +452,11 @@ def reverse_next_questions():
     session_id = body.get("session_id", "")
     qa_history = body.get("qa_history", [])
 
-    if not reverse_sessions.get(session_id):
+    session = reverse_sessions.get(session_id)
+    if not session:
         return jsonify({"error": "セッションが見つかりません"}), 404
 
+    topic = session["topic"]
     history_text = "\n".join(
         f"Q: {qa['question']} → {qa['answer']}"
         + (f"（{qa['comment']}）" if qa.get("comment") else "")
@@ -464,9 +467,10 @@ def reverse_next_questions():
         resp = client.messages.create(
             model=MODEL, max_tokens=300,
             messages=[{"role": "user", "content":
+                f"なんでもあてっこゲームです。ひみつのお題は「{topic}」です。\n"
                 f"これまでの質問と回答:\n{history_text}\n\n"
-                f"これをもとに、次に聞くと絞り込めそうな質問を6つ、小学生向けのやさしい言葉で生成してください。"
-                f"はい/いいえで答えられる質問にすること。JSONで返してください。\n"
+                f"お題「{topic}」を当てるために次に聞くと絞り込めそうな質問を6つ、小学生向けのやさしい言葉で生成してください。"
+                f"はい/いいえで答えられる質問にすること。お題の名前は質問に含めないこと。JSONで返してください。\n"
                 f"出力形式: {{\"questions\": [\"質問1？\", \"質問2？\", \"質問3？\", \"質問4？\", \"質問5？\", \"質問6？\"]}}"
             }]
         )
