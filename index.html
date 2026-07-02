@@ -1319,11 +1319,11 @@ fetch('/api/info').then(r=>r.json()).then(d=>{
 
 // ── ゲーム状態 ───────────────────────────────────────────────────
 let history      = [];
+let gameId = 0;  // ゲームセッションID（古いAPIレスポンスを無効化）
+let reverseGameId = 0;  // 逆モード用ゲームID（古いAPIレスポンスを無効化）
 let currentGuess = null;
 let waitingForAnswer = false;
 let currentQuestionText = '';  // ふりがなHTMLを除いた質問文（履歴保存用）
-let gameId = 0;  // ゲームセッションID（古いAPIレスポンスを無視するため）
-let reverseGameId = 0;  // 逆モード用ゲームID（古いAPIレスポンスを無視するため）
 
 // ── 画面切替 ─────────────────────────────────────────────────────
 function showScreen(id) {
