@@ -1902,8 +1902,9 @@ function showReverseResult(correct, topic, message, hintQuestions, qaHistory) {
   hintList.innerHTML = '';
   if (!correct && hintQuestions && hintQuestions.length > 0) {
     hintQuestions.forEach(q => {
+      if (/^#/.test(q.trim())) return; // Markdownヘッダー行は除外
       const li = document.createElement('li');
-      li.textContent = '• ' + q;
+      li.innerHTML = '• ' + q;
       li.style.cssText = 'font-size:12px; color:#7C3AED; line-height:1.7;';
       hintList.appendChild(li);
     });
