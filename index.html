@@ -1184,6 +1184,14 @@ rt { font-size: 9px; color: #C084FC; }
       <div class="topic-reveal-answer" id="reverse-result-topic"></div>
     </div>
 
+    <!-- ゲーム中の質問と回答の全履歴 -->
+    <div id="reverse-result-history" style="display:none; width:100%;">
+      <div class="evidence-panel" style="margin-bottom:16px;">
+        <div class="evidence-title">📋 このゲームの<ruby>質問<rt>しつもん</rt></ruby>と<ruby>回答<rt>かいとう</rt></ruby></div>
+        <div id="reverse-result-qa-list"></div>
+      </div>
+    </div>
+
     <button class="btn-restart" onclick="resetToStart()">🔍 もういちどあそぶ</button>
   </div>
 
@@ -1556,7 +1564,7 @@ async function submitReverseQuestion(overrideQuestion) {
     });
     const data = await res.json();
     if (data.error) { alert('エラー: ' + data.error); return; }
-    reverseHistory.push({ question, answer: data.answer });
+    reverseHistory.push({ question, answer: data.answer, comment: data.comment || '' });
     addReverseQA(reverseHistory.length, question, data.answer, data.comment);
     flash();
   } catch (e) {
@@ -1610,7 +1618,7 @@ async function submitReverseGuess() {
     const data = await res.json();
     if (data.error) { alert('エラー: ' + data.error); return; }
     flash();
-    showReverseResult(data.correct, data.topic, data.message, data.hint_questions);
+    showReverseResult(data.correct, data.topic, data.message, data.hint_questions, reverseHistory);
   } catch (e) {
     alert('つうしんエラー: ' + e.message);
   } finally {
@@ -1618,7 +1626,7 @@ async function submitReverseGuess() {
   }
 }
 
-function showReverseResult(correct, topic, message, hintQuestions) {
+function showReverseResult(correct, topic, message, hintQuestions, qaHistory) {
   const banner = document.getElementById('reverse-result-banner');
   banner.className = 'result-banner ' + (correct ? 'solved' : 'failed');
   document.getElementById('reverse-result-icon').textContent  = correct ? '🎉' : '🌸';
@@ -1642,6 +1650,29 @@ function showReverseResult(correct, topic, message, hintQuestions) {
     hintPanel.style.display = 'block';
   } else {
     hintPanel.style.display = 'none';
+  }
+
+  // QA全履歴
+  const historyWrap = document.getElementById('reverse-result-history');
+  const historyList = document.getElementById('reverse-result-qa-list');
+  historyList.innerHTML = '';
+  if (qaHistory && qaHistory.length > 0) {
+    const ansMap = { 'はい': 'yes', 'いいえ': 'no', 'たぶん': 'maybe', 'わからない': 'dunno' };
+    qaHistory.forEach((qa, i) => {
+      const commentHtml = qa.comment ? `<span class="ev-comment">（${qa.comment}）</span>` : '';
+      const cls = ansMap[qa.answer] || 'dunno';
+      const el = document.createElement('div');
+      el.className = 'evidence-item';
+      el.innerHTML = `
+        <span class="ev-q">Q${i + 1}</span>
+        <span class="ev-text">${qa.question}</span>
+        <span class="ev-ans ${cls}">${qa.answer}${commentHtml}</span>
+      `;
+      historyList.appendChild(el);
+    });
+    historyWrap.style.display = 'block';
+  } else {
+    historyWrap.style.display = 'none';
   }
 
   showScreen('screen-reverse-result');
