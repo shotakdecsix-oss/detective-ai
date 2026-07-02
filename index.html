@@ -1321,6 +1321,7 @@ fetch('/api/info').then(r=>r.json()).then(d=>{
 let history      = [];
 let currentGuess = null;
 let waitingForAnswer = false;
+let currentQuestionText = '';  // ふりがなHTMLを除いた質問文（履歴保存用）
 
 // ── 画面切替 ─────────────────────────────────────────────────────
 function showScreen(id) {
@@ -1382,14 +1383,15 @@ function setLoading(on) {
 
 function showQuestion(data) {
   document.getElementById('turn-num').textContent = data.turn;
-  document.getElementById('question-text').textContent = data.text;
+  currentQuestionText = data.plain || data.text;  // 履歴用プレーンテキスト
+  document.getElementById('question-text').innerHTML = data.text;  // ふりがなHTML
   waitingForAnswer = false;
 }
 
 // ── 回答 ─────────────────────────────────────────────────────────
 function answer(ans) {
   if (waitingForAnswer) return;
-  const qText = document.getElementById('question-text').textContent;
+  const qText = currentQuestionText;  // ふりがなHTMLではなくプレーンテキスト
   history.push({ question: qText, answer: ans });
   addEvidence(history.length, qText, ans);
   flash();
@@ -1418,9 +1420,9 @@ function addEvidence(num, question, ans) {
 // ── 推理発表 ─────────────────────────────────────────────────────
 function showGuess(data) {
   currentGuess = data;
-  document.getElementById('guess-answer-text').textContent     = data.answer;
+  document.getElementById('guess-answer-text').innerHTML       = data.answer;  // ふりがなHTML
   document.getElementById('guess-confidence-text').textContent = `かくしんど ${data.confidence}%`;
-  document.getElementById('guess-reason-text').textContent     = `「${data.reason}」`;
+  document.getElementById('guess-reason-text').innerHTML       = `「${data.reason}」`;  // ふりがなHTML
   showScreen('screen-guess');
 }
 
@@ -1452,7 +1454,7 @@ function showResult(correct, message, answer, analysis) {
   document.getElementById('result-title').innerHTML   = correct
     ? '<ruby>事件<rt>じけん</rt></ruby><ruby>解決<rt>かいけつ</rt></ruby>！✨'
     : '<ruby>謎<rt>なぞ</rt></ruby>はふかまる…🤔';
-  document.getElementById('result-msg').textContent   = message;
+  document.getElementById('result-msg').innerHTML     = message;  // ふりがなHTML
 
   // ギャップ分析パネル
   const gapPanel = document.getElementById('gap-analysis');

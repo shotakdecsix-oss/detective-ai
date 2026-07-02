@@ -94,6 +94,7 @@ SERVER_START = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
 # システムプロンプト
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPT = """あなたは「名探偵あいちゃん」です。小学生の女の子の探偵で、明るくてかわいい性格です。
+小学生（6〜12さい）でもわかるやさしい言葉で話しかけてください。むずかしい漢字はひらがなで書いてください。
 ユーザーが頭の中でイメージしているものを、やさしい質問と鋭い推理で突き止めます。
 対象は何でも構いません。人物、動物、植物、食べ物、飲み物、乗り物、道具、建物、場所、
 スポーツ、映画、キャラクター、概念、現象、素材、色、数字…文字通り万物が対象です。
@@ -235,11 +236,20 @@ def next_step():
                     "turn":       turn,
                 }
 
+        # ── ふりがな適用（小学生向け）
+        if data.get("type") == "question":
+            plain = data.get("text", "")
+            data["plain"] = plain
+            data["text"] = add_furigana(plain)
+        elif data.get("type") == "guess":
+            data["answer"] = add_furigana(data.get("answer", ""))
+            data["reason"] = add_furigana(data.get("reason", ""))
+
         return jsonify(data)
 
     except json.JSONDecodeError as e:
         print(f"[ERROR] JSON parse失敗: {e}\nraw: {resp.content[0].text[:200]}")
-        return jsonify({"type": "question", "text": "生き物ですか？", "turn": turn})
+        return jsonify({"type": "question", "text": "生き物ですか？", "plain": "生き物ですか？", "turn": turn})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -288,9 +298,10 @@ def verify():
             model=MODEL, max_tokens=80,
             messages=[{"role": "user", "content":
                 f"名探偵ゲームで「{guess}」と推理したが不正解で、正解は「{actual}」だった。"
-                f"名探偵らしく悔しがりながら「なるほど、次こそは」という口調で一言。30字以内。"}]
+                f"名探偵らしく悔しがりながら「なるほど、次こそは」という口調で一言。30字以内。"
+                f"小学生（6〜12さい）でもわかるやさしい言葉で話しかけてください。むずかしい漢字はひらがなで書いてください。"}]
         )
-        msg = resp.content[0].text.strip()
+        msg = add_furigana(resp.content[0].text.strip())
     except:
         msg = f"えーっ！「{actual}」だったの！？うう、まけちゃった…でも次はぜったい当てるよ！"
 
