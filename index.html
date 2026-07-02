@@ -583,6 +583,73 @@ rt { font-size: 9px; color: #C084FC; }
 .btn-reverse-guess:hover { transform: scale(1.05); }
 .btn-reverse-guess:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
+/* もう答えがわかった！ボタン */
+.btn-know-answer {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FF6B9D, #C084FC);
+  color: #fff; border: none;
+  font-size: 15px; font-family: inherit; font-weight: 900;
+  cursor: pointer; letter-spacing: .06em;
+  margin-bottom: 8px;
+  transition: all .2s;
+  box-shadow: 0 4px 18px rgba(255,107,157,.4);
+}
+.btn-know-answer:hover { transform: scale(1.02); box-shadow: 0 6px 24px rgba(255,107,157,.55); }
+.btn-know-answer:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ジャンル・10択 グリッド */
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+.btn-choice {
+  padding: 14px 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.9);
+  border: 1.5px solid #FFDAEA;
+  font-size: 13px; font-family: inherit;
+  color: #7C3AED; cursor: pointer; font-weight: 700;
+  transition: all .15s; text-align: center; line-height: 1.4;
+}
+.btn-choice:hover:not(:disabled) {
+  background: rgba(255,107,157,.1);
+  border-color: #FF6B9D; color: #FF6B9D;
+  transform: scale(1.02);
+}
+.btn-choice:disabled { opacity: .4; cursor: not-allowed; }
+
+/* フェーズ見出し */
+.phase-heading {
+  font-size: 15px; font-weight: 900; color: #7C3AED;
+  text-align: center; margin: 8px 0 14px; line-height: 1.5;
+}
+
+/* 戻るボタン */
+.btn-back {
+  background: transparent;
+  border: 1.5px solid #FFDAEA;
+  border-radius: 20px;
+  padding: 9px 22px;
+  font-size: 12px; font-family: inherit;
+  color: #C084FC; cursor: pointer;
+  transition: all .2s; font-weight: 700;
+}
+.btn-back:hover { border-color: #FF6B9D; color: #FF6B9D; }
+
+/* 次の質問ローディング */
+.next-q-loading {
+  font-size: 12px; color: #C084FC;
+  text-align: center; padding: 10px 0;
+  letter-spacing: .06em;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+
 /* 提案質問ボタン群 */
 .suggested-questions {
   width: 100%;
@@ -1147,17 +1214,48 @@ rt { font-size: 9px; color: #C084FC; }
       <div id="reverse-qa-list"></div>
     </div>
 
-    <!-- 正解入力エリア（1問目以降に表示） -->
+    <!-- 回答フェーズへ（1問目以降に表示） -->
     <div class="reverse-guess-area hidden" id="reverse-guess-area">
-      <div class="reverse-guess-label">🎯 わかった？せいかいを<ruby>入力<rt>にゅうりょく</rt></ruby>してね！</div>
-      <div class="reverse-guess-row">
-        <input type="text" id="reverse-guess-input"
-               placeholder="せいかいは…"
-               onkeydown="if(event.key==='Enter')submitReverseGuess()">
-        <button class="btn-reverse-guess" id="reverse-guess-btn"
-                onclick="submitReverseGuess()"><ruby>回答<rt>かいとう</rt></ruby>する</button>
-      </div>
+      <button class="btn-know-answer" id="reverse-know-btn" onclick="startAnswerPhase()">
+        🎯 もうこたえがわかった！
+      </button>
+      <details>
+        <summary style="font-size:11px; color:#C084FC; cursor:pointer; text-align:center; padding:4px 0; list-style:none; -webkit-appearance:none;">
+          ▼ テキストで<ruby>直接<rt>ちょくせつ</rt></ruby><ruby>答<rt>こた</rt></ruby>える
+        </summary>
+        <div class="reverse-guess-row" style="margin-top:8px;">
+          <input type="text" id="reverse-guess-input"
+                 placeholder="せいかいは…"
+                 onkeydown="if(event.key==='Enter')submitReverseGuess()">
+          <button class="btn-reverse-guess" id="reverse-guess-btn"
+                  onclick="submitReverseGuess()"><ruby>回答<rt>かいとう</rt></ruby>する</button>
+        </div>
+      </details>
     </div>
+  </div>
+
+  <!-- ══ 逆モード：ジャンル選択画面 ══════════════════════════ -->
+  <div id="screen-reverse-genre" class="screen">
+    <header>
+      <div class="badge">🎯</div>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
+    </header>
+    <div style="font-size:64px; text-align:center; margin:10px 0; filter:drop-shadow(0 4px 12px rgba(255,107,157,.3));">🤔</div>
+    <p class="phase-heading">どのジャンルだとおもう？<br><span style="font-size:12px; font-weight:400; color:#C084FC;">タップしてえらんでね</span></p>
+    <div class="choice-grid" id="genre-buttons"></div>
+    <button class="btn-back" onclick="showScreen('screen-reverse')">← <ruby>質問<rt>しつもん</rt></ruby>にもどる</button>
+  </div>
+
+  <!-- ══ 逆モード：10択選択画面 ════════════════════════════ -->
+  <div id="screen-reverse-choices" class="screen">
+    <header>
+      <div class="badge">🎯</div>
+      <h1><ruby>名探偵<rt>めいたんてい</rt></ruby>あいちゃん</h1>
+    </header>
+    <div style="font-size:64px; text-align:center; margin:10px 0; filter:drop-shadow(0 4px 12px rgba(255,107,157,.3));">💭</div>
+    <p class="phase-heading" id="choices-heading">この<ruby>中<rt>なか</rt></ruby>からえらんでね！<br><span style="font-size:12px; font-weight:400; color:#C084FC;">タップしてこたえよう</span></p>
+    <div class="choice-grid" id="choice-buttons"></div>
+    <button class="btn-back" onclick="backToGenreScreen()">← ジャンルにもどる</button>
   </div>
 
   <!-- ══ 逆モード：結果画面 ════════════════════════════════ -->
@@ -1472,6 +1570,7 @@ function resetToStart() {
   currentGuess = null;
   reverseSessionId = null;
   reverseHistory   = [];
+  selectedGenre    = null;
   document.getElementById('evidence-list').innerHTML   = '';
   document.getElementById('reverse-qa-list').innerHTML = '';
   showScreen('screen-start');
@@ -1483,21 +1582,24 @@ function resetToStart() {
 let reverseSessionId = null;
 let reverseHistory   = [];
 let reverseWaiting   = false;
+let selectedGenre    = null;
 
 async function startReverseGame() {
   reverseSessionId = null;
   reverseHistory   = [];
   reverseWaiting   = false;
 
-  document.getElementById('reverse-qa-list').innerHTML       = '';
+  selectedGenre = null;
+  document.getElementById('reverse-qa-list').innerHTML        = '';
   document.getElementById('reverse-suggested-btns').innerHTML = '';
   document.getElementById('reverse-suggested-wrap').classList.add('hidden');
-  document.getElementById('reverse-turn-num').textContent    = '0';
-  document.getElementById('reverse-status').textContent      = 'お題を考えてるよ…🤔';
+  document.getElementById('reverse-turn-num').textContent     = '0';
+  document.getElementById('reverse-status').textContent       = 'お題を考えてるよ…🤔';
   document.getElementById('reverse-bubble-wrap').classList.add('hidden');
   document.getElementById('reverse-guess-area').classList.add('hidden');
-  document.getElementById('reverse-question-input').value    = '';
-  document.getElementById('reverse-guess-input').value       = '';
+  document.getElementById('reverse-know-btn').disabled        = false;
+  document.getElementById('reverse-question-input').value     = '';
+  document.getElementById('reverse-guess-input').value        = '';
 
   showScreen('screen-reverse');
   setReverseLoading(true);
@@ -1567,6 +1669,7 @@ async function submitReverseQuestion(overrideQuestion) {
     reverseHistory.push({ question, answer: data.answer, comment: data.comment || '' });
     addReverseQA(reverseHistory.length, question, data.answer, data.comment);
     flash();
+    fetchNextQuestions(); // 次の質問ボタンを非同期で更新
   } catch (e) {
     alert('つうしんエラー: ' + e.message);
   } finally {
@@ -1623,6 +1726,140 @@ async function submitReverseGuess() {
     alert('つうしんエラー: ' + e.message);
   } finally {
     setReverseLoading(false);
+  }
+}
+
+// ── 次の質問ボタンを動的取得・更新 ───────────────────────────────
+async function fetchNextQuestions() {
+  if (!reverseSessionId) return;
+  const wrap      = document.getElementById('reverse-suggested-wrap');
+  const container = document.getElementById('reverse-suggested-btns');
+  wrap.classList.remove('hidden');
+  container.innerHTML = '<div class="next-q-loading">🔍 しらべてるよ〜</div>';
+
+  try {
+    const res  = await fetch('/api/reverse/next-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId, qa_history: reverseHistory }),
+    });
+    const data = await res.json();
+    container.innerHTML = '';
+    (data.questions || []).forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-suggested';
+      btn.textContent = q;
+      btn.addEventListener('click', () => {
+        if (reverseWaiting) return;
+        btn.disabled = true;
+        submitReverseQuestion(q);
+      });
+      container.appendChild(btn);
+    });
+  } catch (e) {
+    container.innerHTML = '<div class="next-q-loading">よみこみエラー…</div>';
+  }
+}
+
+// ── 回答フェーズ開始（ジャンル選択へ） ───────────────────────────
+async function startAnswerPhase() {
+  if (!reverseSessionId) return;
+  const knowBtn = document.getElementById('reverse-know-btn');
+  knowBtn.disabled = true;
+
+  try {
+    const res  = await fetch('/api/reverse/genres', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); knowBtn.disabled = false; return; }
+    showGenreScreen(data.genres || []);
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+    knowBtn.disabled = false;
+  }
+}
+
+// ── ジャンル選択画面を描画して表示 ───────────────────────────────
+function showGenreScreen(genres) {
+  const container = document.getElementById('genre-buttons');
+  container.innerHTML = '';
+  genres.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-choice';
+    btn.textContent = g;
+    btn.addEventListener('click', () => onGenreSelected(g));
+    container.appendChild(btn);
+  });
+  showScreen('screen-reverse-genre');
+}
+
+// ── ジャンルタップ後：10択を取得 ──────────────────────────────────
+async function onGenreSelected(genre) {
+  selectedGenre = genre;
+  document.getElementById('genre-buttons')
+    .querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
+
+  try {
+    const res  = await fetch('/api/reverse/choices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId, genre }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); backToGenreScreen(); return; }
+    showChoicesScreen(genre, data.choices || []);
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+    backToGenreScreen();
+  }
+}
+
+// ── 10択画面を描画して表示 ────────────────────────────────────────
+function showChoicesScreen(genre, choices) {
+  document.getElementById('choices-heading').innerHTML =
+    `「${genre}」の<ruby>中<rt>なか</rt></ruby>からえらんでね！<br><span style="font-size:12px;font-weight:400;color:#C084FC;">タップしてこたえよう</span>`;
+  const container = document.getElementById('choice-buttons');
+  container.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-choice';
+    btn.textContent = c;
+    btn.addEventListener('click', () => onChoiceSelected(c));
+    container.appendChild(btn);
+  });
+  showScreen('screen-reverse-choices');
+}
+
+// ── ジャンル選択へ戻る ────────────────────────────────────────────
+function backToGenreScreen() {
+  selectedGenre = null;
+  document.getElementById('genre-buttons')
+    .querySelectorAll('.btn-choice').forEach(b => b.disabled = false);
+  showScreen('screen-reverse-genre');
+}
+
+// ── 選択肢タップ → 正解判定 ──────────────────────────────────────
+async function onChoiceSelected(choice) {
+  document.getElementById('choice-buttons')
+    .querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
+
+  try {
+    const res  = await fetch('/api/reverse/guess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: reverseSessionId, guess: choice }),
+    });
+    const data = await res.json();
+    if (data.error) { alert('エラー: ' + data.error); return; }
+    flash();
+    showReverseResult(data.correct, data.topic, data.message, data.hint_questions, reverseHistory);
+  } catch (e) {
+    alert('つうしんエラー: ' + e.message);
+    document.getElementById('choice-buttons')
+      .querySelectorAll('.btn-choice').forEach(b => b.disabled = false);
   }
 }
 

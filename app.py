@@ -413,7 +413,7 @@ def reverse_guess():
             "correct": False, "topic": topic,
             "message": f"ちがうよ！正解は「{topic}」だよ！"
         }
-        correct = data.get("correct", False)
+        correct = bool(data.get("correct", False))
 
         # 不正解の場合、効果的だった質問をヒントとして生成
         hint_questions = []
@@ -440,6 +440,122 @@ def reverse_guess():
         reverse_sessions.pop(session_id, None)
         data["hint_questions"] = hint_questions
         return jsonify(data)
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/reverse/next-questions", methods=["POST"])
+def reverse_next_questions():
+    """会話履歴をもとに次に効果的な質問を6個生成する"""
+    body       = request.get_json(force=True)
+    session_id = body.get("session_id", "")
+    qa_history = body.get("qa_history", [])
+
+    if not reverse_sessions.get(session_id):
+        return jsonify({"error": "セッションが見つかりません"}), 404
+
+    history_text = "\n".join(
+        f"Q: {qa['question']} → {qa['answer']}"
+        + (f"（{qa['comment']}）" if qa.get("comment") else "")
+        for qa in qa_history
+    ) or "（まだ質問なし）"
+
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=300,
+            messages=[{"role": "user", "content":
+                f"これまでの質問と回答:\n{history_text}\n\n"
+                f"これをもとに、次に聞くと絞り込めそうな質問を6つ、小学生向けのやさしい言葉で生成してください。"
+                f"はい/いいえで答えられる質問にすること。JSONで返してください。\n"
+                f"出力形式: {{\"questions\": [\"質問1？\", \"質問2？\", \"質問3？\", \"質問4？\", \"質問5？\", \"質問6？\"]}}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"questions": []}
+        return jsonify({"questions": data.get("questions", [])[:6]})
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/reverse/genres", methods=["POST"])
+def reverse_genres():
+    """QA履歴をもとにお題が属しそうなジャンルを6〜8個生成（正解ジャンル必須）"""
+    body       = request.get_json(force=True)
+    session_id = body.get("session_id", "")
+
+    session = reverse_sessions.get(session_id)
+    if not session:
+        return jsonify({"error": "セッションが見つかりません"}), 404
+
+    topic = session["topic"]
+    history_text = "\n".join(
+        f"Q: {qa['question']} → {qa['answer']}" for qa in session["qa_history"]
+    ) or "（なし）"
+
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=200,
+            messages=[{"role": "user", "content":
+                f"お題は「{topic}」です。\n"
+                f"これまでのQ&A:\n{history_text}\n\n"
+                f"このお題が属しそうなジャンルを6〜8個、小学生向けのやさしい言葉で生成してください。"
+                f"必ず「{topic}」が属する正解のジャンルを1つ含めてください。"
+                f"シャッフルして返してください。JSONで返してください。\n"
+                f"出力形式: {{\"genres\": [\"どうぶつ\", \"たべもの\", ...]}}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"genres": []}
+        genres = data.get("genres", [])
+        random.shuffle(genres)
+        return jsonify({"genres": genres})
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/reverse/choices", methods=["POST"])
+def reverse_choices():
+    """選ばれたジャンルから10択を生成（正解1＋はずれ9、シャッフル済み）"""
+    body       = request.get_json(force=True)
+    session_id = body.get("session_id", "")
+    genre      = body.get("genre", "")
+
+    session = reverse_sessions.get(session_id)
+    if not session:
+        return jsonify({"error": "セッションが見つかりません"}), 404
+
+    topic = session["topic"]
+
+    try:
+        resp = client.messages.create(
+            model=MODEL, max_tokens=300,
+            messages=[{"role": "user", "content":
+                f"ジャンル「{genre}」に属するもの（小学生が知っているもの）を10個、日本語で生成してください。"
+                f"必ず「{topic}」を1つ含めてください。残り9個はそのジャンルの別のものにしてください。"
+                f"シャッフルして返してください。JSONで返してください。\n"
+                f"出力形式: {{\"choices\": [\"選択肢1\", \"選択肢2\", ..., \"選択肢10\"]}}"
+            }]
+        )
+        raw = resp.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 and e > s else {"choices": []}
+        choices = data.get("choices", [])
+        # お題が含まれていない場合は強制挿入
+        if topic not in choices:
+            if len(choices) >= 10:
+                choices[random.randint(0, 9)] = topic
+            else:
+                choices.append(topic)
+        random.shuffle(choices)
+        return jsonify({"choices": choices[:10]})
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 
