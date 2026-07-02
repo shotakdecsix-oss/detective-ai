@@ -512,7 +512,10 @@ def reverse_next_questions():
             raw = raw.split("```")[1].split("```")[0].replace("json", "").strip()
         s = raw.find("{"); e = raw.rfind("}") + 1
         data = json.loads(raw[s:e]) if s >= 0 and e > s else {"questions": []}
-        questions = [add_furigana(q) for q in data.get("questions", [])[:6]]
+        questions = [
+            {"html": add_furigana(q), "plain": q}
+            for q in data.get("questions", [])[:6]
+        ]
         return jsonify({"questions": questions})
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
